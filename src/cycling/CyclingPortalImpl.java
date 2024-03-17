@@ -125,13 +125,11 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public void removeTeam(int teamId) throws IDNotRecognisedException {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public int[] getTeams() {
-		// TODO Auto-generated method stub
-		return null;
+        return teams.stream().mapToInt(Team::getId).toArray();
 	}
 
 	@Override

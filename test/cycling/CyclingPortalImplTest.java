@@ -14,15 +14,15 @@ class CyclingPortalImplTest {
 
     @org.junit.jupiter.api.Test
     void createTeam_oneValidTeam() throws InvalidNameException, IllegalNameException {
-        MiniCyclingPortal portal1 = new CyclingPortalImpl();
-        int teamId = portal1.createTeam("Ape", "Escapees from the zoo");
+        MiniCyclingPortal portal = new CyclingPortalImpl();
+        int teamId = portal.createTeam("Ape", "Escapees from the zoo");
         assertEquals(1, teamId);
     }
     @org.junit.jupiter.api.Test
     void createTeam_EmptyTeamNameThrowsException() {
-        MiniCyclingPortal portal1 = new CyclingPortalImpl();
+        MiniCyclingPortal portal = new CyclingPortalImpl();
         assertThrows(InvalidNameException.class, () -> {
-            portal1.createTeam("", "Escapees from the zoo");
+            portal.createTeam("", "Escapees from the zoo");
         });
     }
 
@@ -31,6 +31,19 @@ class CyclingPortalImplTest {
     }
 
     @org.junit.jupiter.api.Test
-    void getTeams() {
+    void getTeams_ThreeTeams() throws InvalidNameException, IllegalNameException {
+        MiniCyclingPortal portal = new CyclingPortalImpl();
+        portal.createTeam("Ape", "Escapees from the zoo");
+        portal.createTeam("Chimp", "Escapees from the zoo");
+        portal.createTeam("Egg", "Escapees from the zoo");
+        assertEquals(3, portal.getTeams().length);
+        assertEquals(1, portal.getTeams()[0]);
+        assertEquals(2, portal.getTeams()[1]);
+        assertEquals(3, portal.getTeams()[2]);
+    }
+    @org.junit.jupiter.api.Test
+    void getTeams_Empty() {
+        MiniCyclingPortal portal = new CyclingPortalImpl();
+        assertEquals(0, portal.getTeams().length);
     }
 }

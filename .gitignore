@@ -1,0 +1,19 @@
+# Compiled class file
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+
+# Personal
+/out/
+/bin/
+/__MACOSX/

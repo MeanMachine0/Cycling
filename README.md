@@ -1,0 +1,1 @@
+Solo project (MiniCyclingPortal, excluding CyclingPortal)

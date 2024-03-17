@@ -3,12 +3,14 @@ package cycling;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 
 /**
  * Egg
  * @author Marcus Carter
  */
 public class CyclingPortalImpl implements MiniCyclingPortal {
+	private ArrayList<Team> teams = new ArrayList<>();
 
 	@Override
 	public int[] getRaceIds() {
@@ -101,8 +103,17 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int createTeam(String name, String description) throws IllegalNameException, InvalidNameException {
-		// TODO Auto-generated method stub
-		return 0;
+		if (name == null) throw new InvalidNameException();
+		if (name.length() > 30) throw new InvalidNameException();
+		// TODO if whitespace in name, throw new InvalidNameException();
+		Team team = new Team(name, description);
+		for (Team team1 : teams) {
+			if (team1.getName().equals(name)) {
+				throw new IllegalNameException();
+			}
+		}
+		teams.add(team);
+		return teams.indexOf(team);
 	}
 
 	@Override

@@ -103,17 +103,23 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int createTeam(String name, String description) throws IllegalNameException, InvalidNameException {
-		if (name == null) throw new InvalidNameException();
-		if (name.length() > 30) throw new InvalidNameException();
-		// TODO if whitespace in name, throw new InvalidNameException();
-		Team team = new Team(name, description);
-		for (Team team1 : teams) {
-			if (team1.getName().equals(name)) {
-				throw new IllegalNameException();
+		if (name == null || name.isEmpty() || name.length() > 30) {
+			throw new InvalidNameException();
+		}
+		for (char c : name.toCharArray()) {
+			if (Character.isWhitespace(c)) {
+				throw new InvalidNameException();
 			}
 		}
+		int maxId = 0;
+		for (Team team : teams) {
+			int id = team.getId();
+			if (id > maxId) maxId = id;
+			if (team.getName().equals(name)) throw new IllegalNameException();
+		}
+		Team team = new Team(maxId + 1, name, description);
 		teams.add(team);
-		return teams.indexOf(team);
+		return team.getId();
 	}
 
 	@Override

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * Egg
@@ -11,7 +13,6 @@ import java.util.ArrayList;
  */
 public class CyclingPortalImpl implements MiniCyclingPortal {
 	private ArrayList<Team> teams = new ArrayList<>();
-
 	@Override
 	public int[] getRaceIds() {
 		// TODO Auto-generated method stub
@@ -124,7 +125,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeTeam(int teamId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
+		boolean teamExists = !teams.removeIf(team -> team.getId() == teamId);
+		if (teamExists) throw new IDNotRecognisedException();
 	}
 
 	@Override
@@ -134,21 +136,31 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getTeamRiders(int teamId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-		return null;
+		Team team = getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
+		ArrayList<Rider> riders = team.getRiders();
+        return riders.stream().mapToInt(Rider::getId).toArray();
 	}
 
 	@Override
 	public int createRider(int teamID, String name, int yearOfBirth)
 			throws IDNotRecognisedException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return 0;
+		Team team = getTeam(teamID).orElseThrow(IDNotRecognisedException::new);
+		ArrayList<Rider> riders = team.getRiders();
+		Rider rider = new Rider(Team.nextRiderId++, name, yearOfBirth);
+		riders.add(rider);
+		return rider.getId();
 	}
 
 	@Override
 	public void removeRider(int riderId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-
+		for (Team team : teams) {
+			int teamId = team.getId();
+			int[] riderIds = getTeamRiders(teamId);
+			if (Arrays.stream(riderIds).anyMatch(id -> id == riderId)) {
+				ArrayList<Rider> riders = team.getRiders();
+				riders.removeIf(rider -> rider.getId() == riderId);
+			}
+		}
 	}
 
 	@Override
@@ -218,5 +230,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		// TODO Auto-generated method stub
 
 	}
-
+	public Optional<Team> getTeam(int teamId) {
+		return teams.stream().filter(team -> team.getId() == teamId).findFirst();
+	}
 }

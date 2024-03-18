@@ -15,8 +15,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	private int nextRaceId = 1;
 	private int nextTeamId = 1;
 	private int nextRiderId = 1;
-	private final ArrayList<CyclingEntity> teams = new ArrayList<>();
-	private final ArrayList<CyclingEntity> races = new ArrayList<>();
+	private final ArrayList<Entity> teams = new ArrayList<>();
+	private final ArrayList<Entity> races = new ArrayList<>();
 
 	@Override
 	public int[] getRaceIds() {
@@ -112,12 +112,12 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int createTeam(String name, String description) throws IllegalNameException, InvalidNameException {
 		validateName(teams, name);
-		Team team = new Team(nextTeamId++, name, description);
+		Entity team = new Team(nextTeamId++, name, description);
 		teams.add(team);
 		return team.getId();
 	}
 
-	private static void validateName(ArrayList<CyclingEntity> cyclingEntities, String name) throws InvalidNameException, IllegalNameException {
+	private static void validateName(ArrayList<Entity> cyclingEntities, String name) throws InvalidNameException, IllegalNameException {
 		if (name == null || name.isEmpty() || name.length() > 30) {
 			throw new InvalidNameException();
 		}
@@ -126,20 +126,20 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 				throw new InvalidNameException();
 			}
 		}
-		for (CyclingEntity cyclingEntity : cyclingEntities) {
-			if (cyclingEntity.getName().equals(name)) throw new IllegalNameException();
+		for (Entity entity : cyclingEntities) {
+			if (entity.getName().equals(name)) throw new IllegalNameException();
 		}
 	}
 
 	@Override
 	public void removeTeam(int teamId) throws IDNotRecognisedException {
-		boolean teamExists = !teams.removeIf(cyclingEntity -> cyclingEntity.getId() == teamId);
+		boolean teamExists = !teams.removeIf(entity -> entity.getId() == teamId);
 		if (teamExists) throw new IDNotRecognisedException();
 	}
 
 	@Override
 	public int[] getTeams() {
-        return teams.stream().mapToInt(CyclingEntity::getId).toArray();
+        return teams.stream().mapToInt(Entity::getId).toArray();
 	}
 
 	@Override
@@ -161,7 +161,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeRider(int riderId) throws IDNotRecognisedException {
-		for (CyclingEntity team : teams) {
+		for (Entity team : teams) {
 			int teamId = team.getId();
 			int[] riderIds = getTeamRiders(teamId);
 			if (Arrays.stream(riderIds).anyMatch(id -> id == riderId)) {
@@ -239,13 +239,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	}
 	// HELPER METHODS:
-	private Optional<CyclingEntity> getCyclingEntity(ArrayList<CyclingEntity> cyclingEntities, int id) {
-		return cyclingEntities.stream().filter(cyclingEntity -> cyclingEntity.getId() == id).findFirst();
+	private Optional<Entity> getCyclingEntity(ArrayList<Entity> cyclingEntities, int id) {
+		return cyclingEntities.stream().filter(entity -> entity.getId() == id).findFirst();
 	}
 	/**
 	For unit testing
 	 */
-	public Optional<CyclingEntity> getTeam(int teamId) {
+	public Optional<Entity> getTeam(int teamId) {
 		return getCyclingEntity(teams, teamId);
 	}
 }

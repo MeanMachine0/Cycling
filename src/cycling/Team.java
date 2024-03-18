@@ -1,17 +1,13 @@
 package cycling;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Team implements CyclingEntity {
-    private final int id;
-    private final String name;
+public class Team extends Entity implements HasDescription {
     private final String description;
     private final ArrayList<Rider> riders = new ArrayList<>();
 
     public Team(int id, String name, String description) {
-        this.id = id;
-        this.name = name;
+        super(id, name);
         this.description = description;
     }
     public String toString() {
@@ -19,13 +15,6 @@ public class Team implements CyclingEntity {
     }
 
     @Override
-    public int getId() {
-        return id;
-    }
-    @Override
-    public String getName() {
-        return name;
-    }
     public String getDescription() {
         return description;
     }

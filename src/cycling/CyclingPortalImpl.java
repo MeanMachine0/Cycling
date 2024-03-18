@@ -12,6 +12,7 @@ import java.util.Optional;
  * @author Marcus Carter
  */
 public class CyclingPortalImpl implements MiniCyclingPortal {
+	private int nextRiderId = 1;
 	private ArrayList<Team> teams = new ArrayList<>();
 	@Override
 	public int[] getRaceIds() {
@@ -146,7 +147,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			throws IDNotRecognisedException, IllegalArgumentException {
 		Team team = getTeam(teamID).orElseThrow(IDNotRecognisedException::new);
 		ArrayList<Rider> riders = team.getRiders();
-		Rider rider = new Rider(Team.nextRiderId++, name, yearOfBirth);
+		Rider rider = new Rider(nextRiderId++, name, yearOfBirth);
 		riders.add(rider);
 		return rider.getId();
 	}

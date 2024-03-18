@@ -42,7 +42,7 @@ class CyclingPortalImplTest {
 //        assert portal.getTeams(teamId) == teamId;
 //    }
     @org.junit.jupiter.api.Test
-    void getTeams_ThreeTeams() throws InvalidNameException, IllegalNameException {
+    void getTeams_threeTeams() throws InvalidNameException, IllegalNameException {
         MiniCyclingPortal portal = new CyclingPortalImpl();
         portal.createTeam("Ape", "Zoo escapees");
         portal.createTeam("Chimp", "Zoo escapees");
@@ -53,21 +53,35 @@ class CyclingPortalImplTest {
         assertEquals(3, portal.getTeams()[2]);
     }
     @org.junit.jupiter.api.Test
-    void getTeams_Empty() {
+    void getTeams_empty() {
         MiniCyclingPortal portal = new CyclingPortalImpl();
         assertEquals(0, portal.getTeams().length);
     }
-   @org.junit.jupiter.api.Test
-    void createRider_simple() throws InvalidNameException, IllegalNameException, IDNotRecognisedException {
+    @org.junit.jupiter.api.Test
+    void createRider() throws InvalidNameException, IllegalNameException, IDNotRecognisedException {
+        // arrange
         CyclingPortalImpl portal = new CyclingPortalImpl();
         int teamId = portal.createTeam("Apes", "Zoo escapees");
+        Team team = portal.getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
+        ArrayList<Rider> riders = team.getRiders();
+        // act
         int riderId = portal.createRider(teamId, "Daniel", 1999);
-        int rider1Id = portal.createRider(teamId, "Joel", 2001);
-        int rider2Id = portal.createRider(teamId, "Marcus", 2004);
-        Team zooEscapees = portal.getTeam(teamId).orElseThrow();
+        // assert
+        assertEquals(1, riders.getFirst().getId());
+    }
+   @org.junit.jupiter.api.Test
+    void removeRider() throws InvalidNameException, IllegalNameException, IDNotRecognisedException {
+        // arrange
+        CyclingPortalImpl portal = new CyclingPortalImpl();
+        int teamId = portal.createTeam("Apes", "Zoo escapees");
+        portal.createRider(teamId, "Daniel", 1999);
+        portal.createRider(teamId, "Joel", 2001);
+        int marcusId = portal.createRider(teamId, "Marcus", 2004);
+        Team zooEscapees = portal.getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
         ArrayList<Rider> apes = zooEscapees.getRiders();
-        System.out.println(apes);
-        portal.removeRider(rider1Id);
-        System.out.println(apes);
+        // act
+        portal.removeRider(2);
+        // assert
+        assertEquals(3, marcusId);
    }
 }

@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Team implements Serializable {
-    public static int nextRiderId = 1;
     private final int id;
     private final String name;
     private final String description;

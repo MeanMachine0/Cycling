@@ -1,7 +1,6 @@
 package cycling;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,7 +20,7 @@ class CyclingPortalImplTest {
         assertEquals(1, teamId);
     }
     @org.junit.jupiter.api.Test
-    void createTeam_emptyTeamNameThrowsException() {
+    void createTeam_emptyNameThrowsException() {
         assertThrows(InvalidNameException.class, () -> {
             portal.createTeam("", "Zoo escapees");
         });
@@ -50,7 +49,7 @@ class CyclingPortalImplTest {
     void createRider() throws InvalidNameException, IllegalNameException, IDNotRecognisedException {
         // arrange
         int teamId = portal.createTeam("Apes", "Zoo escapees");
-        Team team = portal.getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
+        Team team = (Team) portal.getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
         ArrayList<Rider> riders = team.getRiders();
         // act
         int riderId = portal.createRider(teamId, "Daniel", 1999);
@@ -64,11 +63,24 @@ class CyclingPortalImplTest {
         portal.createRider(teamId, "Daniel", 1999);
         portal.createRider(teamId, "Joel", 2001);
         int marcusId = portal.createRider(teamId, "Marcus", 2004);
-        Team zooEscapees = portal.getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
+        Team zooEscapees = (Team) portal.getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
         ArrayList<Rider> apes = zooEscapees.getRiders();
         // act
         portal.removeRider(2);
         // assert
         assertEquals(3, marcusId);
    }
+   @org.junit.jupiter.api.Test
+    void createRace_oneValidRace() throws InvalidNameException, IllegalNameException {
+        // act
+       int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+       // assert
+       assertEquals(1, raceId);
+   }
+    @org.junit.jupiter.api.Test
+    void createRace_emptyNameThrowsException() {
+        assertThrows(InvalidNameException.class, () -> {
+            portal.createRace("", "Zoo escapees");
+        });
+    }
 }

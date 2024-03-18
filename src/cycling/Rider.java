@@ -1,6 +1,8 @@
 package cycling;
 
-public class Rider {
+import java.io.Serializable;
+
+public class Rider implements CyclingEntity {
     private final int id;
     private final String name;
     private final int yearOfBirth;

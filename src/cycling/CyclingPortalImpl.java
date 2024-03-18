@@ -12,8 +12,12 @@ import java.util.Optional;
  * @author Marcus Carter
  */
 public class CyclingPortalImpl implements MiniCyclingPortal {
+	private int nextRaceId = 1;
+	private int nextTeamId = 1;
 	private int nextRiderId = 1;
-	private ArrayList<Team> teams = new ArrayList<>();
+	private final ArrayList<CyclingEntity> teams = new ArrayList<>();
+	private final ArrayList<CyclingEntity> races = new ArrayList<>();
+
 	@Override
 	public int[] getRaceIds() {
 		// TODO Auto-generated method stub
@@ -22,8 +26,10 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int createRace(String name, String description) throws IllegalNameException, InvalidNameException {
-		// TODO Auto-generated method stub
-		return 0;
+		validateName(races, name);
+		Race race = new Race(nextRaceId++, name, description);
+		races.add(race);
+		return race.getId();
 	}
 
 	@Override
@@ -105,6 +111,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int createTeam(String name, String description) throws IllegalNameException, InvalidNameException {
+		validateName(teams, name);
+		Team team = new Team(nextTeamId++, name, description);
+		teams.add(team);
+		return team.getId();
+	}
+
+	private static void validateName(ArrayList<CyclingEntity> cyclingEntities, String name) throws InvalidNameException, IllegalNameException {
 		if (name == null || name.isEmpty() || name.length() > 30) {
 			throw new InvalidNameException();
 		}
@@ -113,31 +126,25 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 				throw new InvalidNameException();
 			}
 		}
-		int maxId = 0;
-		for (Team team : teams) {
-			int id = team.getId();
-			if (id > maxId) maxId = id;
-			if (team.getName().equals(name)) throw new IllegalNameException();
+		for (CyclingEntity cyclingEntity : cyclingEntities) {
+			if (cyclingEntity.getName().equals(name)) throw new IllegalNameException();
 		}
-		Team team = new Team(maxId + 1, name, description);
-		teams.add(team);
-		return team.getId();
 	}
 
 	@Override
 	public void removeTeam(int teamId) throws IDNotRecognisedException {
-		boolean teamExists = !teams.removeIf(team -> team.getId() == teamId);
+		boolean teamExists = !teams.removeIf(cyclingEntity -> cyclingEntity.getId() == teamId);
 		if (teamExists) throw new IDNotRecognisedException();
 	}
 
 	@Override
 	public int[] getTeams() {
-        return teams.stream().mapToInt(Team::getId).toArray();
+        return teams.stream().mapToInt(CyclingEntity::getId).toArray();
 	}
 
 	@Override
 	public int[] getTeamRiders(int teamId) throws IDNotRecognisedException {
-		Team team = getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
+		Team team = (Team) getCyclingEntity(teams, teamId).orElseThrow(IDNotRecognisedException::new);
 		ArrayList<Rider> riders = team.getRiders();
         return riders.stream().mapToInt(Rider::getId).toArray();
 	}
@@ -145,7 +152,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int createRider(int teamID, String name, int yearOfBirth)
 			throws IDNotRecognisedException, IllegalArgumentException {
-		Team team = getTeam(teamID).orElseThrow(IDNotRecognisedException::new);
+		Team team = (Team) getCyclingEntity(teams, teamID).orElseThrow(IDNotRecognisedException::new);
 		ArrayList<Rider> riders = team.getRiders();
 		Rider rider = new Rider(nextRiderId++, name, yearOfBirth);
 		riders.add(rider);
@@ -154,11 +161,11 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeRider(int riderId) throws IDNotRecognisedException {
-		for (Team team : teams) {
+		for (CyclingEntity team : teams) {
 			int teamId = team.getId();
 			int[] riderIds = getTeamRiders(teamId);
 			if (Arrays.stream(riderIds).anyMatch(id -> id == riderId)) {
-				ArrayList<Rider> riders = team.getRiders();
+				ArrayList<Rider> riders = ((Team) team).getRiders();
 				riders.removeIf(rider -> rider.getId() == riderId);
 			}
 		}
@@ -232,7 +239,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	}
 	// HELPER METHODS:
-	public Optional<Team> getTeam(int teamId) {
-		return teams.stream().filter(team -> team.getId() == teamId).findFirst();
+	private Optional<CyclingEntity> getCyclingEntity(ArrayList<CyclingEntity> cyclingEntities, int id) {
+		return cyclingEntities.stream().filter(cyclingEntity -> cyclingEntity.getId() == id).findFirst();
+	}
+	/**
+	For unit testing
+	 */
+	public Optional<CyclingEntity> getTeam(int teamId) {
+		return getCyclingEntity(teams, teamId);
 	}
 }

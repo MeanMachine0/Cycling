@@ -6,3 +6,6 @@ Solo project (MiniCyclingPortal, excluding CyclingPortal)
 - Open in drawio
 - Edit in drawio
 - File -> export to .pdf in res directory
+
+## Cross-platform
+- git config core.autocrlf true

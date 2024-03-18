@@ -231,6 +231,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		// TODO Auto-generated method stub
 
 	}
+	// HELPER METHODS:
 	public Optional<Team> getTeam(int teamId) {
 		return teams.stream().filter(team -> team.getId() == teamId).findFirst();
 	}

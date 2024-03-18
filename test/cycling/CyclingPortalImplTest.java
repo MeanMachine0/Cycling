@@ -6,44 +6,34 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CyclingPortalImplTest {
-
+    CyclingPortalImpl portal;
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
+        portal = new CyclingPortalImpl();
     }
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
     }
-
     @org.junit.jupiter.api.Test
     void createTeam_oneValidTeam() throws InvalidNameException, IllegalNameException {
-        MiniCyclingPortal portal = new CyclingPortalImpl();
         int teamId = portal.createTeam("Ape", "Zoo escapees");
         assertEquals(1, teamId);
     }
     @org.junit.jupiter.api.Test
     void createTeam_emptyTeamNameThrowsException() {
-        MiniCyclingPortal portal = new CyclingPortalImpl();
         assertThrows(InvalidNameException.class, () -> {
             portal.createTeam("", "Zoo escapees");
         });
     }
     @org.junit.jupiter.api.Test
     void removeTeam_idDoesNotExistThrowsException() {
-        MiniCyclingPortal portal = new CyclingPortalImpl();
         assertThrows(IDNotRecognisedException.class, () -> {
             portal.removeTeam(1);
         });
     }
-//    @org.junit.jupiter.api.Test
-//    void removeTeam_oneTeam() throws InvalidNameException, IllegalNameException, IDNotRecognisedException {
-//        MiniCyclingPortal portal = new CyclingPortalImpl();
-//        int teamId = portal.createTeam("Ape", "Escapees from the zoo");
-//        assert portal.getTeams(teamId) == teamId;
-//    }
     @org.junit.jupiter.api.Test
     void getTeams_threeTeams() throws InvalidNameException, IllegalNameException {
-        MiniCyclingPortal portal = new CyclingPortalImpl();
         portal.createTeam("Ape", "Zoo escapees");
         portal.createTeam("Chimp", "Zoo escapees");
         portal.createTeam("Egg", "Zoo escapees");
@@ -54,25 +44,22 @@ class CyclingPortalImplTest {
     }
     @org.junit.jupiter.api.Test
     void getTeams_empty() {
-        MiniCyclingPortal portal = new CyclingPortalImpl();
         assertEquals(0, portal.getTeams().length);
     }
     @org.junit.jupiter.api.Test
     void createRider() throws InvalidNameException, IllegalNameException, IDNotRecognisedException {
         // arrange
-        CyclingPortalImpl portal = new CyclingPortalImpl();
         int teamId = portal.createTeam("Apes", "Zoo escapees");
         Team team = portal.getTeam(teamId).orElseThrow(IDNotRecognisedException::new);
         ArrayList<Rider> riders = team.getRiders();
         // act
         int riderId = portal.createRider(teamId, "Daniel", 1999);
         // assert
-        assertEquals(1, riders.getFirst().getId());
+        assertEquals(riderId, riders.getFirst().getId());
     }
    @org.junit.jupiter.api.Test
     void removeRider() throws InvalidNameException, IllegalNameException, IDNotRecognisedException {
         // arrange
-        CyclingPortalImpl portal = new CyclingPortalImpl();
         int teamId = portal.createTeam("Apes", "Zoo escapees");
         portal.createRider(teamId, "Daniel", 1999);
         portal.createRider(teamId, "Joel", 2001);

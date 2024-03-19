@@ -71,9 +71,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public double getStageLength(int stageId) throws IDNotRecognisedException {
-		for (Entity raceEntity : races) {
-			Race race = (Race) raceEntity;
-			ArrayList<Stage> stages = race.getStages();
+		for (Entity race : races) {
+			ArrayList<Stage> stages = ((Race) race).getStages();
 			Optional<Stage> optionalStage = stages.stream()
 					.filter(stage -> stage.getId() == stageId)
 					.findFirst();
@@ -173,17 +172,11 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeRider(int riderId) throws IDNotRecognisedException {
-		boolean found = false;
 		for (Entity team : teams) {
-			int teamId = team.getId();
-			int[] riderIds = getTeamRiders(teamId);
-			if (Arrays.stream(riderIds).anyMatch(id -> id == riderId)) {
-				found = true;
-				ArrayList<Rider> riders = ((Team) team).getRiders();
-				riders.removeIf(rider -> rider.getId() == riderId);
-			}
+			ArrayList<Rider> riders = ((Team) team).getRiders();
+			if (riders.removeIf(rider -> rider.getId() == riderId)) return;
 		}
-		if (!found) throw new IDNotRecognisedException();
+		throw new IDNotRecognisedException();
 	}
 	@Override
 	public void registerRiderResultsInStage(int stageId, int riderId, LocalTime... checkpoints)

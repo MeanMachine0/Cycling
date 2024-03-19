@@ -73,14 +73,11 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public double getStageLength(int stageId) throws IDNotRecognisedException {
 		for (Entity raceEntity : races) {
 			Race race = (Race) raceEntity;
-			int[] stageIds = getRaceStages(race.getId());
-			if (Arrays.stream(stageIds).anyMatch(id -> id == stageId)) {
-				ArrayList<Stage> stages = race.getStages();
-				return stages.stream()
-						.filter(stage -> stage.getId() == stageId)
-						.findFirst()
-						.orElseThrow(IDNotRecognisedException::new).getLength();
-			}
+			ArrayList<Stage> stages = race.getStages();
+			Optional<Stage> optionalStage = stages.stream()
+					.filter(stage -> stage.getId() == stageId)
+					.findFirst();
+			if (optionalStage.isPresent()) return optionalStage.get().getLength();
 		}
 		throw new IDNotRecognisedException();
 	}

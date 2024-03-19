@@ -34,8 +34,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public String viewRaceDetails(int raceId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-		return null;
+		Race race = (Race) getEntity(races, raceId).orElseThrow(IDNotRecognisedException::new);
+		return race.toString();
 	}
 
 	@Override

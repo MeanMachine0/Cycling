@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CyclingPortalImplTest {
-    CyclingPortalImpl portal;
+    MiniCyclingPortal portal;
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         portal = new CyclingPortalImpl();

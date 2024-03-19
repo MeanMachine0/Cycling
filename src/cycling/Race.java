@@ -11,7 +11,8 @@ public class Race extends Entity implements HasDescription {
         this.description = description;
     }
     public String toString() {
-        return "Race[id="+id+", name="+name+", description="+description+"]";
+        return "Race[id="+id+", name="+name+", description="+description+", numStages="+stages.size()+
+                ", totalLength="+stages.stream().mapToDouble(Stage::getLength).reduce(0, Double::sum)+"km]";
     }
 
     public String getDescription() {

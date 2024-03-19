@@ -40,8 +40,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeRaceById(int raceId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-
+		if (races.removeIf(race -> race.getId() == raceId)) return;
+		throw new IDNotRecognisedException();
 	}
 
 	@Override

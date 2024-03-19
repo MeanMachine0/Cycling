@@ -21,8 +21,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getRaceIds() {
-		// TODO Auto-generated method stub
-		return null;
+		return races.stream().mapToInt(Entity::getId).toArray();
 	}
 
 	@Override

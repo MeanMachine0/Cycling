@@ -116,4 +116,17 @@ class CyclingPortalImplTest {
         // assert
         assertEquals(2.718, stageLength);
     }
+    @org.junit.jupiter.api.Test
+    void getRaceIds() throws InvalidNameException, IllegalNameException {
+        // arrange
+        int raceId1 = portal.createRace("Egg&Spoon", "...on a bike");
+        int raceId2 = portal.createRace("Chimps&Gorillas", "...are apes");
+        // act
+        int[] raceIds = portal.getRaceIds();
+        // assert
+        assertEquals(1, raceId1);
+        assertEquals(2, raceId2);
+        assertEquals(raceId1, raceIds[0]);
+        assertEquals(raceId2, raceIds[1]);
+    }
 }

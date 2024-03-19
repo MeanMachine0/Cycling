@@ -47,13 +47,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int getNumberOfStages(int raceId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-		return 0;
+		Race race = (Race) getEntity(races, raceId).orElseThrow(IDNotRecognisedException::new);
+		return race.getStages().size();
 	}
 
 	@Override
 	public int addStageToRace(int raceId, String stageName, String description, double length, LocalDateTime startTime,
-			StageType type)
+							  StageType type)
 			throws IDNotRecognisedException, IllegalNameException, InvalidNameException, InvalidLengthException {
 		validateName(races, stageName);
 		Entity race = getEntity(races, raceId).orElseThrow(IDNotRecognisedException::new);
@@ -71,8 +71,18 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public double getStageLength(int stageId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-		return 0;
+		for (Entity raceEntity : races) {
+			Race race = (Race) raceEntity;
+			int[] stageIds = getRaceStages(race.getId());
+			if (Arrays.stream(stageIds).anyMatch(id -> id == stageId)) {
+				ArrayList<Stage> stages = race.getStages();
+				return stages.stream()
+						.filter(stage -> stage.getId() == stageId)
+						.findFirst()
+						.orElseThrow(IDNotRecognisedException::new).getLength();
+			}
+		}
+		throw new IDNotRecognisedException();
 	}
 
 	@Override
@@ -166,16 +176,18 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeRider(int riderId) throws IDNotRecognisedException {
+		boolean found = false;
 		for (Entity team : teams) {
 			int teamId = team.getId();
 			int[] riderIds = getTeamRiders(teamId);
 			if (Arrays.stream(riderIds).anyMatch(id -> id == riderId)) {
+				found = true;
 				ArrayList<Rider> riders = ((Team) team).getRiders();
 				riders.removeIf(rider -> rider.getId() == riderId);
 			}
 		}
+		if (!found) throw new IDNotRecognisedException();
 	}
-
 	@Override
 	public void registerRiderResultsInStage(int stageId, int riderId, LocalTime... checkpoints)
 			throws IDNotRecognisedException, DuplicatedResultException, InvalidCheckpointTimesException,

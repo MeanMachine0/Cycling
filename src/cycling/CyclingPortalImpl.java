@@ -13,6 +13,7 @@ import java.util.Optional;
  */
 public class CyclingPortalImpl implements MiniCyclingPortal {
 	private int nextRaceId = 1;
+	private int nextStageId = 1;
 	private int nextTeamId = 1;
 	private int nextRiderId = 1;
 	private final ArrayList<Entity> teams = new ArrayList<>();
@@ -54,14 +55,18 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public int addStageToRace(int raceId, String stageName, String description, double length, LocalDateTime startTime,
 			StageType type)
 			throws IDNotRecognisedException, IllegalNameException, InvalidNameException, InvalidLengthException {
-		// TODO Auto-generated method stub
-		return 0;
+		validateName(races, stageName);
+		Entity race = getEntity(races, raceId).orElseThrow(IDNotRecognisedException::new);
+		ArrayList<Stage> stages = ((Race) race).getStages();
+		Stage stage = new Stage(nextStageId, stageName, description, length, startTime, type);
+		stages.add(stage);
+		return nextStageId++;
 	}
 
 	@Override
 	public int[] getRaceStages(int raceId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-		return null;
+		Race race = (Race) getEntity(races, raceId).orElseThrow(IDNotRecognisedException::new);
+		return race.getStages().stream().mapToInt(Stage::getId).toArray();
 	}
 
 	@Override
@@ -117,7 +122,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		return team.getId();
 	}
 
-	private static void validateName(ArrayList<Entity> cyclingEntities, String name) throws InvalidNameException, IllegalNameException {
+	private static void validateName(ArrayList<Entity> entities, String name) throws InvalidNameException, IllegalNameException {
 		if (name == null || name.isEmpty() || name.length() > 30) {
 			throw new InvalidNameException();
 		}
@@ -126,7 +131,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 				throw new InvalidNameException();
 			}
 		}
-		for (Entity entity : cyclingEntities) {
+		for (Entity entity : entities) {
 			if (entity.getName().equals(name)) throw new IllegalNameException();
 		}
 	}
@@ -144,7 +149,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getTeamRiders(int teamId) throws IDNotRecognisedException {
-		Team team = (Team) getCyclingEntity(teams, teamId).orElseThrow(IDNotRecognisedException::new);
+		Team team = (Team) getEntity(teams, teamId).orElseThrow(IDNotRecognisedException::new);
 		ArrayList<Rider> riders = team.getRiders();
         return riders.stream().mapToInt(Rider::getId).toArray();
 	}
@@ -152,7 +157,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int createRider(int teamID, String name, int yearOfBirth)
 			throws IDNotRecognisedException, IllegalArgumentException {
-		Team team = (Team) getCyclingEntity(teams, teamID).orElseThrow(IDNotRecognisedException::new);
+		Team team = (Team) getEntity(teams, teamID).orElseThrow(IDNotRecognisedException::new);
 		ArrayList<Rider> riders = team.getRiders();
 		Rider rider = new Rider(nextRiderId++, name, yearOfBirth);
 		riders.add(rider);
@@ -239,13 +244,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	}
 	// HELPER METHODS:
-	private Optional<Entity> getCyclingEntity(ArrayList<Entity> cyclingEntities, int id) {
-		return cyclingEntities.stream().filter(entity -> entity.getId() == id).findFirst();
-	}
-	/**
-	For unit testing
-	 */
-	public Optional<Entity> getTeam(int teamId) {
-		return getCyclingEntity(teams, teamId);
+	private Optional<Entity> getEntity(ArrayList<Entity> entities, int id) {
+		return entities.stream().filter(entity -> entity.getId() == id).findFirst();
 	}
 }

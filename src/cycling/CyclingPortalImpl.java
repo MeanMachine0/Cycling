@@ -112,14 +112,32 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int addIntermediateSprintToStage(int stageId, double location) throws IDNotRecognisedException,
 			InvalidLocationException, InvalidStageStateException, InvalidStageTypeException {
-		// TODO Auto-generated method stub
-		return 0;
+		for (Entity race : races) {
+			ArrayList<Entity> stages = objectsToEntities(((Race) race).getStages());
+			Optional<Entity> optionalStage = getEntity(stages, stageId);
+			if (optionalStage.isPresent()) {
+				Stage stage = (Stage) optionalStage.get();
+				if (location > stage.getLength()) throw new InvalidLocationException();
+				if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
+				Checkpoint checkpoint = new Checkpoint(nextCheckpointId, "", CheckpointType.SPRINT, location);
+				ArrayList<Checkpoint> checkpoints = stage.getCheckpoints();
+				checkpoints.add(checkpoint);
+				return nextCheckpointId++;
+			}
+		}
+		throw new IDNotRecognisedException();
 	}
 
 	@Override
 	public void removeCheckpoint(int checkpointId) throws IDNotRecognisedException, InvalidStageStateException {
-		// TODO Auto-generated method stub
-
+		for (Entity race : races) {
+			ArrayList<Entity> stages = objectsToEntities(((Race) race).getStages());
+			for (Entity stage : stages) {
+				ArrayList<Checkpoint> checkpoints = ((Stage) stage).getCheckpoints();
+				if (checkpoints.removeIf(checkpoint -> checkpoint.id == checkpointId)) return;
+			}
+		}
+		throw new IDNotRecognisedException();
 	}
 
 	@Override

@@ -179,4 +179,17 @@ class CyclingPortalImplTest {
         assertEquals(1, checkpointIds.length);
         assertEquals(1, checkpointIds[0]);
     }
+    @org.junit.jupiter.api.Test
+    void removeCheckpoint() throws InvalidStageStateException, InvalidLocationException, IDNotRecognisedException, InvalidStageTypeException, InvalidNameException, IllegalNameException, InvalidLengthException {
+        // arrange
+        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        int stageId = portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+        portal.addIntermediateSprintToStage(stageId, 6.141);
+        // act
+        portal.removeCheckpoint(1);
+        // assert
+        assertEquals(0, portal.getStageCheckpoints(stageId).length);
+    }
 }

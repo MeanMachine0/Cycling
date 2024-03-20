@@ -82,8 +82,11 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeStageById(int stageId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-
+		for (Entity race : races) {
+			ArrayList<Stage> stages = ((Race) race).getStages();
+			if (stages.removeIf(stage -> stage.getId() == stageId)) return;
+		}
+		throw new IDNotRecognisedException();
 	}
 
 	@Override

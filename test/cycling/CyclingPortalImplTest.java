@@ -139,4 +139,19 @@ class CyclingPortalImplTest {
         // assert
         assertEquals(2, portal.getRaceIds()[0]);
     }
+    @org.junit.jupiter.api.Test
+    void removeStageById() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException {
+        // arrange
+        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime spoonStartTime = eggStartTime.plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+        portal.addStageToRace(raceId, "Spoon",
+                "Carry a spoon", 2.718, spoonStartTime, StageType.HIGH_MOUNTAIN);
+        // act
+        portal.removeStageById(2);
+        // assert
+        assertEquals(1, portal.getRaceStages(raceId).length);
+    }
 }

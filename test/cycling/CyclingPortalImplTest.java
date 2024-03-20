@@ -165,4 +165,18 @@ class CyclingPortalImplTest {
         // assert
         assertEquals(1, portal.getRaceStages(raceId).length);
     }
+    @org.junit.jupiter.api.Test
+    void addCategorizedClimbToStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException {
+        // arrange
+        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        int stageId = portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+        // act
+        portal.addCategorizedClimbToStage(stageId, 6.141, CheckpointType.C2, 0.8, 5.0);
+        //assert
+        int[] checkpointIds = portal.getStageCheckpoints(stageId);
+        assertEquals(1, checkpointIds.length);
+        assertEquals(1, checkpointIds[0]);
+    }
 }

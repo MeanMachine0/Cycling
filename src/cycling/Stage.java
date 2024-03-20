@@ -1,12 +1,14 @@
 package cycling;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 public class Stage extends Entity implements HasDescription {
     private final String description;
     private final double length;
     private final LocalDateTime startTime;
     private final StageType type;
+    private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
     public Stage(int id, String name, String description, double length, LocalDateTime startTime, StageType type) {
         super(id, name);
         this.description = description;
@@ -30,4 +32,5 @@ public class Stage extends Entity implements HasDescription {
     public StageType getType() {
         return type;
     }
+    public ArrayList<Checkpoint> getCheckpoints() { return checkpoints; }
 }

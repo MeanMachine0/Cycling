@@ -55,6 +55,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 							  StageType type)
 			throws IDNotRecognisedException, IllegalNameException, InvalidNameException, InvalidLengthException {
 		validateName(races, stageName);
+		if (length < 5) throw new InvalidLengthException();
 		Entity race = getEntity(races, raceId).orElseThrow(IDNotRecognisedException::new);
 		ArrayList<Stage> stages = ((Race) race).getStages();
 		Stage stage = new Stage(nextStageId, stageName, description, length, startTime, type);

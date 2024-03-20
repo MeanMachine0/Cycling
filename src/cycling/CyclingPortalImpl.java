@@ -146,8 +146,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeTeam(int teamId) throws IDNotRecognisedException {
-		boolean teamExists = !teams.removeIf(entity -> entity.getId() == teamId);
-		if (teamExists) throw new IDNotRecognisedException();
+		if (teams.removeIf(team -> team.getId() == teamId)) return;
+		throw new IDNotRecognisedException();
 	}
 
 	@Override

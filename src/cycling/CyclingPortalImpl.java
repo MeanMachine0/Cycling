@@ -67,7 +67,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public double getStageLength(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		return stage.getLength();
 	}
 
@@ -84,7 +84,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public int addCategorizedClimbToStage(int stageId, Double location, CheckpointType type, Double averageGradient,
 			Double length) throws IDNotRecognisedException, InvalidLocationException, InvalidStageStateException,
 		InvalidStageTypeException {
-		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		if (location > stage.getLength()) throw new InvalidLocationException();
 		if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
 		Climb checkpoint = new Climb(nextId++, "", type, location, averageGradient, length);
@@ -96,7 +96,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int addIntermediateSprintToStage(int stageId, double location) throws IDNotRecognisedException,
 			InvalidLocationException, InvalidStageStateException, InvalidStageTypeException {
-		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		if (location > stage.getLength()) throw new InvalidLocationException();
 		if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
 		Checkpoint checkpoint = new Checkpoint(nextId++, "", CheckpointType.SPRINT, location);
@@ -125,7 +125,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getStageCheckpoints(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		return stage.getChildren().stream().mapToInt(Checkpoint::getId).toArray();
 	}
 
@@ -191,16 +191,16 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public void registerRiderResultsInStage(int stageId, int riderId, LocalTime... checkpoints)
 			throws IDNotRecognisedException, DuplicatedResultException, InvalidCheckpointTimesException,
 			InvalidStageStateException {
-		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		if (checkpoints.length != stage.numCriticalPoints()) throw new InvalidCheckpointTimesException();
-		Rider rider = getEntityOrThrow(riderId, narrow(teams, Team.class), Rider.class);
+		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
 		stage.addResult(rider, checkpoints);
 	}
 
 	@Override
 	public LocalTime[] getRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
-		Rider rider = getEntityOrThrow(riderId, narrow(teams, Team.class), Rider.class);
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
 		Optional<LocalTime[]> results = Optional.ofNullable(stage.getResults().get(rider));
 		return results.orElseGet(() -> new LocalTime[0]);
 	}
@@ -213,8 +213,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void deleteRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
-		Rider rider = getEntityOrThrow(riderId, narrow(teams, Team.class), Rider.class);
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
 		stage.getResults().remove(rider);
 	}
 
@@ -271,8 +271,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	private Optional<Entity> getEntity(int id, ArrayList<Entity> entities) {
 		return entities.stream().filter(entity -> entity.id == id).findFirst();
 	}
-	private <T extends Entity> T getEntityOrThrow(int id, ArrayList<? extends HasChildren> entities, Class<T> subEntityClass) throws IDNotRecognisedException {
-
+	private <T extends Entity> T getEntity(int id, ArrayList<? extends HasChildren> entities, Class<T> subEntityClass) throws IDNotRecognisedException {
 		for (HasChildren entity : entities) {
 			ArrayList<Entity> entityChildren = new ArrayList<>(entity.getChildren());
 			Optional<Entity> optionalEntity = getEntity(id, entityChildren);

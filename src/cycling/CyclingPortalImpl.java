@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -68,7 +67,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public double getStageLength(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
+		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
 		return stage.getLength();
 	}
 
@@ -85,7 +84,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public int addCategorizedClimbToStage(int stageId, Double location, CheckpointType type, Double averageGradient,
 			Double length) throws IDNotRecognisedException, InvalidLocationException, InvalidStageStateException,
 		InvalidStageTypeException {
-		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
+		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
 		if (location > stage.getLength()) throw new InvalidLocationException();
 		if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
 		Climb checkpoint = new Climb(nextId++, "", type, location, averageGradient, length);
@@ -97,7 +96,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int addIntermediateSprintToStage(int stageId, double location) throws IDNotRecognisedException,
 			InvalidLocationException, InvalidStageStateException, InvalidStageTypeException {
-		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
+		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
 		if (location > stage.getLength()) throw new InvalidLocationException();
 		if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
 		Checkpoint checkpoint = new Checkpoint(nextId++, "", CheckpointType.SPRINT, location);
@@ -109,7 +108,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public void removeCheckpoint(int checkpointId) throws IDNotRecognisedException, InvalidStageStateException {
 		for (Entity race : races) {
-			ArrayList<Entity> stages = objectsToEntities(((Race) race).getChildren());
+			ArrayList<Entity> stages = new ArrayList<>(((Race) race).getChildren());
 			for (Entity stage : stages) {
 				ArrayList<Checkpoint> checkpoints = ((Stage) stage).getChildren();
 				if (checkpoints.removeIf(checkpoint -> checkpoint.id == checkpointId)) return;
@@ -126,7 +125,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getStageCheckpoints(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
+		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
 		return stage.getChildren().stream().mapToInt(Checkpoint::getId).toArray();
 	}
 
@@ -192,16 +191,16 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public void registerRiderResultsInStage(int stageId, int riderId, LocalTime... checkpoints)
 			throws IDNotRecognisedException, DuplicatedResultException, InvalidCheckpointTimesException,
 			InvalidStageStateException {
-		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
+		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
 		if (checkpoints.length != stage.numCriticalPoints()) throw new InvalidCheckpointTimesException();
-		Rider rider = getEntityOrThrow(riderId, entitiesToSubEntities(teams, Team.class));
+		Rider rider = getEntityOrThrow(riderId, narrow(teams, Team.class), Rider.class);
 		stage.addResult(rider, checkpoints);
 	}
 
 	@Override
 	public LocalTime[] getRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
-		Rider rider = getEntityOrThrow(riderId, entitiesToSubEntities(teams, Team.class));
+		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
+		Rider rider = getEntityOrThrow(riderId, narrow(teams, Team.class), Rider.class);
 		Optional<LocalTime[]> results = Optional.ofNullable(stage.getResults().get(rider));
 		return results.orElseGet(() -> new LocalTime[0]);
 	}
@@ -214,8 +213,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void deleteRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
-		Rider rider = getEntityOrThrow(riderId, entitiesToSubEntities(teams, Team.class));
+		Stage stage = getEntityOrThrow(stageId, narrow(races, Race.class), Stage.class);
+		Rider rider = getEntityOrThrow(riderId, narrow(teams, Team.class), Rider.class);
 		stage.getResults().remove(rider);
 	}
 
@@ -262,19 +261,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	}
 
 	// HELPER METHODS:
-	private ArrayList<Entity> objectsToEntities(ArrayList<?> objects) {
-		ArrayList<Entity> entities = new ArrayList<>();
-		for (Object object : objects) {
-			if (!(object instanceof Entity)) return new ArrayList<Entity>();
-			Entity entity = (Entity) object;
-			entities.add(entity);
-		}
-		return entities;
-	}
-	private <T extends Entity> ArrayList<T> entitiesToSubEntities(ArrayList<Entity> entities, Class<T> subEntity) {
+	private <T extends Entity> ArrayList<T> narrow(ArrayList<Entity> entities, Class<T> subEntity) {
 		ArrayList<T> subEntities = new ArrayList<>();
 		for (Entity entity : entities) {
-			if (!(subEntity.isInstance(entity))) return new ArrayList<T>();
 			subEntities.add(subEntity.cast(entity));
 		}
 		return subEntities;
@@ -282,13 +271,12 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	private Optional<Entity> getEntity(int id, ArrayList<Entity> entities) {
 		return entities.stream().filter(entity -> entity.id == id).findFirst();
 	}
-	private <T extends Entity> T getEntityOrThrow(int id, ArrayList<? extends HasChildren> entities) throws IDNotRecognisedException {
+	private <T extends Entity> T getEntityOrThrow(int id, ArrayList<? extends HasChildren> entities, Class<T> subEntityClass) throws IDNotRecognisedException {
+
 		for (HasChildren entity : entities) {
-			ArrayList<Entity> entityChildren = objectsToEntities(entity.getChildren());
+			ArrayList<Entity> entityChildren = new ArrayList<>(entity.getChildren());
 			Optional<Entity> optionalEntity = getEntity(id, entityChildren);
-			if (optionalEntity.isPresent()) {
-                return (T) optionalEntity.get();
-			}
+			if (optionalEntity.isPresent()) return subEntityClass.cast(optionalEntity.get());
 		}
 		throw new IDNotRecognisedException();
 	}

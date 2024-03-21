@@ -8,6 +8,7 @@ public class Climb extends Checkpoint {
         this.averageGradient = averageGradient;
         this.length = length;
     }
+    @Override
     public String toString() {
         return "Checkpoint(Climb)[id="+id+", type="+type+", location="+location+
                 ", averageGradient="+averageGradient+", length="+length+"]";

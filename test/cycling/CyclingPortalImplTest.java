@@ -1,6 +1,7 @@
 package cycling;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,7 +56,7 @@ class CyclingPortalImplTest {
         // assert
         int[] riders = portal.getTeamRiders(teamId);
         assertEquals(1, riders.length);
-        assertEquals(1, riders[0]);
+        assertEquals(riderId, riders[0]);
     }
    @org.junit.jupiter.api.Test
     void removeRider() throws InvalidNameException, IllegalNameException, IDNotRecognisedException {
@@ -96,8 +97,8 @@ class CyclingPortalImplTest {
                 "Carry a spoon", 2.718 + 3, spoonStartTime, StageType.HIGH_MOUNTAIN);
         // assert
         int[] stageIds = portal.getRaceStages(raceId);
-        assertEquals(1, eggStageId);
-        assertEquals(2, spoonStageId);
+        assertEquals(2, eggStageId);
+        assertEquals(3, spoonStageId);
         assertEquals(stageIds[0], eggStageId);
         assertEquals(stageIds[1], spoonStageId);
     }
@@ -177,7 +178,21 @@ class CyclingPortalImplTest {
         //assert
         int[] checkpointIds = portal.getStageCheckpoints(stageId);
         assertEquals(1, checkpointIds.length);
-        assertEquals(1, checkpointIds[0]);
+        assertEquals(3, checkpointIds[0]);
+    }
+    @org.junit.jupiter.api.Test
+    void addIntermediateSprintToStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException {
+        // arrange
+        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        int stageId = portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+        // act
+        portal.addIntermediateSprintToStage(stageId, 6.141);
+        //assert
+        int[] checkpointIds = portal.getStageCheckpoints(stageId);
+        assertEquals(1, checkpointIds.length);
+        assertEquals(3, checkpointIds[0]);
     }
     @org.junit.jupiter.api.Test
     void removeCheckpoint() throws InvalidStageStateException, InvalidLocationException, IDNotRecognisedException, InvalidStageTypeException, InvalidNameException, IllegalNameException, InvalidLengthException {
@@ -188,8 +203,28 @@ class CyclingPortalImplTest {
                 "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
         portal.addIntermediateSprintToStage(stageId, 6.141);
         // act
-        portal.removeCheckpoint(1);
+        portal.removeCheckpoint(3);
         // assert
         assertEquals(0, portal.getStageCheckpoints(stageId).length);
+    }
+    @org.junit.jupiter.api.Test
+    void registerRiderResultsInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
+        // arrange
+        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        int stageId = portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+        portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
+        portal.addIntermediateSprintToStage(stageId, 4);
+        int teamId = portal.createTeam("Apes", "Zoo escapees");
+        portal.createRider(teamId, "Daniel", 1999);
+        portal.createRider(teamId, "Joel", 2001);
+        int myId = portal.createRider(teamId, "Marcus", 2004);
+        LocalTime now = LocalTime.now();
+        LocalTime[] criticalTimes = { now, now.plusMinutes(50), now.plusMinutes(62), now.plusMinutes(70)};
+        // act
+        portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
+        // assert
+        assertEquals(criticalTimes, portal.getRiderResultsInStage(stageId, myId));
     }
 }

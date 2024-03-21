@@ -2,7 +2,7 @@ package cycling;
 
 import java.util.ArrayList;
 
-public class Team extends Entity implements HasDescription {
+public class Team extends Entity implements HasChildren {
     private final String description;
     private final ArrayList<Rider> riders = new ArrayList<>();
 
@@ -10,13 +10,15 @@ public class Team extends Entity implements HasDescription {
         super(id, name);
         this.description = description;
     }
+    @Override
     public String toString() {
         return "Team[id="+id+", name="+name+", description="+description+"]";
     }
 
-    @Override
+
     public String getDescription() {
         return description;
     }
-    public ArrayList<Rider> getRiders() { return riders; }
+    @Override
+    public ArrayList<Rider> getChildren() { return riders; }
 }

@@ -7,6 +7,7 @@ public class Rider extends Entity {
         super(id, name);
         this.yearOfBirth = yearOfBirth;
     }
+    @Override
     public String toString() {
         return "Rider[id="+id+", name=" + name + ", yearOfBirth=" + yearOfBirth + "]";
     }

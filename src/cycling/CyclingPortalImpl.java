@@ -202,7 +202,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public LocalTime[] getRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
 		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
 		Rider rider = getEntityOrThrow(riderId, entitiesToSubEntities(teams, Team.class));
-		return stage.getResults().get(rider);
+		Optional<LocalTime[]> results = Optional.ofNullable(stage.getResults().get(rider));
+		return results.orElseGet(() -> new LocalTime[0]);
 	}
 
 	@Override
@@ -213,7 +214,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void deleteRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
-
+		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
+		Rider rider = getEntityOrThrow(riderId, entitiesToSubEntities(teams, Team.class));
+		stage.getResults().remove(rider);
 	}
 
 	@Override

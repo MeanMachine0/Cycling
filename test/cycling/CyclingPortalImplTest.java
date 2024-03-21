@@ -248,4 +248,25 @@ class CyclingPortalImplTest {
             portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
         });
     }
+    @org.junit.jupiter.api.Test
+    void deleteRiderResultsInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
+        // arrange
+        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        int stageId = portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+        portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
+        portal.addIntermediateSprintToStage(stageId, 4);
+        int teamId = portal.createTeam("Apes", "Zoo escapees");
+        portal.createRider(teamId, "Daniel", 1999);
+        portal.createRider(teamId, "Joel", 2001);
+        int myId = portal.createRider(teamId, "Marcus", 2004);
+        LocalTime now = LocalTime.now();
+        LocalTime[] criticalTimes = { now, now.plusMinutes(50), now.plusMinutes(62), now.plusMinutes(70)};
+        portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
+        // act
+        portal.deleteRiderResultsInStage(stageId, myId);
+        // assert
+        assertEquals(0, portal.getRiderResultsInStage(stageId, myId).length);
+    }
 }

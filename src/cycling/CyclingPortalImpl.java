@@ -194,30 +194,15 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			InvalidStageStateException {
 		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
 		if (checkpoints.length != stage.numCriticalPoints()) throw new InvalidCheckpointTimesException();
-		for (Entity team : teams) {
-			ArrayList<Entity> riders = objectsToEntities(((Team) team).getChildren());
-			Optional<Entity> optionalRider = getEntity(riderId, riders);
-			if (optionalRider.isPresent()) {
-				Rider rider = (Rider) optionalRider.get();
-				stage.addResult(rider, checkpoints);
-				return;
-			}
-		}
-		throw new IDNotRecognisedException();
+		Rider rider = getEntityOrThrow(riderId, entitiesToSubEntities(teams, Team.class));
+		stage.addResult(rider, checkpoints);
 	}
 
 	@Override
 	public LocalTime[] getRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
 		Stage stage = getEntityOrThrow(stageId, entitiesToSubEntities(races, Race.class));
-		for (Entity team : teams) {
-			ArrayList<Entity> riders = objectsToEntities(((Team) team).getChildren());
-			Optional<Entity> optionalRider = getEntity(riderId, riders);
-			if (optionalRider.isPresent()) {
-				Rider rider = (Rider) optionalRider.get();
-				return stage.getResults().get(rider);
-			}
-		}
-		throw new IDNotRecognisedException();
+		Rider rider = getEntityOrThrow(riderId, entitiesToSubEntities(teams, Team.class));
+		return stage.getResults().get(rider);
 	}
 
 	@Override
@@ -228,7 +213,6 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void deleteRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
 
 	}
 

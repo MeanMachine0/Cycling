@@ -1,10 +1,10 @@
 package cycling;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Egg
@@ -201,14 +201,76 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public LocalTime[] getRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
-		Optional<LocalTime[]> results = Optional.ofNullable(stage.getResults().get(rider));
-		return results.orElseGet(() -> new LocalTime[0]);
+		Optional<LocalTime[]> riderResults = Optional.ofNullable(stage.getResults().get(rider));
+		return riderResults.orElseGet(() -> new LocalTime[0]);
 	}
 
 	@Override
 	public LocalTime getRiderAdjustedElapsedTimeInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-		return null;
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
+		Map<Rider, LocalTime[]> results = stage.getResults();
+		Optional<LocalTime[]> optionalRiderResults = Optional.ofNullable(results.get(rider));
+		if (optionalRiderResults.isEmpty()) return null;
+		LocalTime[] riderResults = optionalRiderResults.get();
+		LocalTime riderStart = riderResults[0];
+		LocalTime riderEnd = riderResults[riderResults.length - 1];
+		Duration adjustedElapsedTime;
+		if (stage.getType() == StageType.TT) {
+			adjustedElapsedTime = Duration.between(riderStart, riderEnd);
+		}
+		else {
+			Duration comparisonWindow = Duration.ofSeconds(results.size());
+			Duration oneSecond = Duration.ofSeconds(1);
+			LocalTime[] ends = results.values().stream()
+					.map(times -> times[times.length - 1])
+					.filter(time -> {
+						Duration difference = Duration.between(time, riderEnd);
+						if (difference.isNegative()) {
+							return difference.abs().compareTo(Duration.ofDays(1).minus(comparisonWindow)) >= 0;
+						}
+						return difference.compareTo(comparisonWindow) <= 0;
+					})
+					.toArray(LocalTime[]::new);
+			LocalTime[] beforeEnds = Arrays.stream(ends)
+					.filter(end -> end.isBefore(riderEnd))
+					.sorted(Comparator.reverseOrder())
+					.toArray(LocalTime[]::new);
+			LocalTime adjustedRiderEnd = riderEnd;
+			for (LocalTime end : beforeEnds) {
+				Duration difference = Duration.between(end, adjustedRiderEnd);
+				if (difference.compareTo(oneSecond) <= 0) {
+					adjustedRiderEnd = end;
+				} else {
+					break;
+				}
+			}
+			LocalTime[] afterEnds = Arrays.stream(ends)
+					.filter(end -> end.isAfter(riderEnd))
+					.sorted(Comparator.reverseOrder())
+					.toArray(LocalTime[]::new);
+			for (LocalTime end : afterEnds) {
+				Duration difference = Duration.between(adjustedRiderEnd, end);
+ 				if (difference.abs().compareTo(oneSecond) <= 0 ||
+						difference.abs().compareTo(Duration.ofDays(1).minus(oneSecond)) >= 0) {
+					 adjustedRiderEnd = end;
+				} else {
+					 break;
+				}
+			}
+			if (riderStart.isBefore(adjustedRiderEnd)) {
+				adjustedElapsedTime = Duration.between(riderStart, adjustedRiderEnd);
+			} else {
+				adjustedElapsedTime = Duration.between(riderStart, LocalTime.MAX)
+						.plus(Duration.ofNanos(1))
+						.plus(Duration.between(LocalTime.MIDNIGHT, adjustedRiderEnd));
+			}
+		}
+		int hours = adjustedElapsedTime.toHoursPart();
+		int minutes = adjustedElapsedTime.toMinutesPart();
+		int seconds = adjustedElapsedTime.toSecondsPart();
+		int nanoseconds = adjustedElapsedTime.toNanosPart();
+		return LocalTime.of(hours, minutes, seconds, nanoseconds);
 	}
 
 	@Override

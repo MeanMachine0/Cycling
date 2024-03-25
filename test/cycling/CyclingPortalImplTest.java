@@ -298,6 +298,7 @@ class CyclingPortalImplTest {
         int mumId = portal.createRider(parentsId, "Annie", 1973);
         LocalTime[] bouncerCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(1) };
         LocalTime[] fluffyCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(2) };
+        LocalTime[] stormyCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4).minusNanos(1) };
         LocalTime[] dadCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4) };
         LocalTime[] mumCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(2) };
         LocalTime[] danCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(1) };
@@ -312,14 +313,13 @@ class CyclingPortalImplTest {
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
         portal.registerRiderResultsInStage(stageId, dadId, dadCriticalTimes);
         portal.registerRiderResultsInStage(stageId, joelId, joelCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, stormyId, stormyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, myId, myCriticalTimes);
         portal.registerRiderResultsInStage(stageId, mumId, mumCriticalTimes);
         // act
         LocalTime myAdjustedElapsedTime = portal.getRiderAdjustedElapsedTimeInStage(stageId, myId);
         // assert
         assertEquals(myElapsedTime.minusSeconds(5), myAdjustedElapsedTime);
-        assertNull(portal.getRiderAdjustedElapsedTimeInStage(stageId, stormyId));
-        assert portal.getRiderResultsInStage(stageId, stormyId).length == 0;
     }
     @org.junit.jupiter.api.Test
     void getRiderAdjustedElapsedTimeInStage_TT() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {

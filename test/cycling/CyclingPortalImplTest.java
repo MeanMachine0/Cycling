@@ -287,20 +287,28 @@ class CyclingPortalImplTest {
         portal.addIntermediateSprintToStage(stageId, 4);
         int teamId = portal.createTeam("Apes", "Zoo escapees");
         int parentsId = portal.createTeam("Great_Apes", "The founding zoo escapees");
+        int petsId = portal.createTeam("Humans", "Zookeepers");
+        int bouncerId = portal.createRider(petsId, "Bouncer", 1970);
+        int fluffyId = portal.createRider(petsId, "Fluffy", 1970);
+        int stormyId = portal.createRider(petsId, "Stormy", 1970);
         int danId = portal.createRider(teamId, "Daniel", 1999);
         int joelId = portal.createRider(teamId, "Joel", 2001);
         int myId = portal.createRider(teamId, "Marcus", 2004);
         int dadId = portal.createRider(parentsId, "Tim", 1970);
         int mumId = portal.createRider(parentsId, "Annie", 1973);
+        LocalTime[] bouncerCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(1) };
+        LocalTime[] fluffyCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(2) };
         LocalTime[] dadCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4) };
         LocalTime[] mumCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(2) };
         LocalTime[] danCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(1) };
         LocalTime[] joelCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT };
-        LocalTime[] myCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(1) };
+        LocalTime[] myCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(3) };
         Duration myDuration = Duration.between(myCriticalTimes[0], LocalTime.MAX)
                 .plusNanos(1)
                 .plus(Duration.between(LocalTime.MIDNIGHT, myCriticalTimes[myCriticalTimes.length - 1]));
         LocalTime myElapsedTime = LocalTime.of(myDuration.toHoursPart(), myDuration.toMinutesPart(), myDuration.toSecondsPart(), myDuration.toNanosPart());
+        portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
         portal.registerRiderResultsInStage(stageId, dadId, dadCriticalTimes);
         portal.registerRiderResultsInStage(stageId, joelId, joelCriticalTimes);
@@ -309,6 +317,51 @@ class CyclingPortalImplTest {
         // act
         LocalTime myAdjustedElapsedTime = portal.getRiderAdjustedElapsedTimeInStage(stageId, myId);
         // assert
-        assertEquals(myElapsedTime.minusSeconds(3), myAdjustedElapsedTime);
+        assertEquals(myElapsedTime.minusSeconds(5), myAdjustedElapsedTime);
+        assertNull(portal.getRiderAdjustedElapsedTimeInStage(stageId, stormyId));
+        assert portal.getRiderResultsInStage(stageId, stormyId).length == 0;
+    }
+    @org.junit.jupiter.api.Test
+    void getRiderAdjustedElapsedTimeInStage_TT() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
+        // arrange
+        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        int stageId = portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141 + 3, eggStartTime, StageType.TT);
+        int teamId = portal.createTeam("Apes", "Zoo escapees");
+        int parentsId = portal.createTeam("Great_Apes", "The founding zoo escapees");
+        int petsId = portal.createTeam("Humans", "Zookeepers");
+        int bouncerId = portal.createRider(petsId, "Bouncer", 1970);
+        int fluffyId = portal.createRider(petsId, "Fluffy", 1970);
+        int stormyId = portal.createRider(petsId, "Stormy", 1970);
+        int danId = portal.createRider(teamId, "Daniel", 1999);
+        int joelId = portal.createRider(teamId, "Joel", 2001);
+        int myId = portal.createRider(teamId, "Marcus", 2004);
+        int dadId = portal.createRider(parentsId, "Tim", 1970);
+        int mumId = portal.createRider(parentsId, "Annie", 1973);
+        LocalTime[] bouncerCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.plusSeconds(1) };
+        LocalTime[] fluffyCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.plusSeconds(2) };
+        LocalTime[] dadCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.minusSeconds(4) };
+        LocalTime[] mumCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.minusSeconds(2) };
+        LocalTime[] danCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.minusSeconds(1) };
+        LocalTime[] joelCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT };
+        LocalTime[] myCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.plusSeconds(3) };
+        Duration myDuration = Duration.between(myCriticalTimes[0], LocalTime.MAX)
+                .plusNanos(1)
+                .plus(Duration.between(LocalTime.MIDNIGHT, myCriticalTimes[myCriticalTimes.length - 1]));
+        LocalTime myElapsedTime = LocalTime.of(myDuration.toHoursPart(), myDuration.toMinutesPart(), myDuration.toSecondsPart(), myDuration.toNanosPart());
+        portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, dadId, dadCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, joelId, joelCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, myId, myCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, mumId, mumCriticalTimes);
+        // act
+        LocalTime myAdjustedElapsedTime = portal.getRiderAdjustedElapsedTimeInStage(stageId, myId);
+        // assert
+        assertEquals(myElapsedTime, myAdjustedElapsedTime);
+        assertNull(portal.getRiderAdjustedElapsedTimeInStage(stageId, stormyId));
+        assert portal.getRiderResultsInStage(stageId, stormyId).length == 0;
     }
 }

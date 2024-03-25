@@ -153,8 +153,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeTeam(int teamId) throws IDNotRecognisedException {
-		if (teams.removeIf(team -> team.id == teamId)) return;
-		throw new IDNotRecognisedException();
+		Team team = (Team) getEntity(teamId, teams).orElseThrow(IDNotRecognisedException::new);
+		for (Rider rider : team.getChildren()) removeRiderResults(rider);
+		teams.remove(team);
 	}
 
 	@Override
@@ -181,12 +182,14 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeRider(int riderId) throws IDNotRecognisedException {
+		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
+		removeRiderResults(rider);
 		for (Entity team : teams) {
-			ArrayList<Rider> riders = ((Team) team).getChildren();
-			if (riders.removeIf(rider -> rider.id == riderId)) return;
+			if (((Team) team).getChildren().remove(rider)) return;
 		}
 		throw new IDNotRecognisedException();
 	}
+
 	@Override
 	public void registerRiderResultsInStage(int stageId, int riderId, LocalTime... checkpoints)
 			throws IDNotRecognisedException, DuplicatedResultException, InvalidCheckpointTimesException,
@@ -215,11 +218,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		LocalTime[] riderResults = optionalRiderResults.get();
 		LocalTime riderStart = riderResults[0];
 		LocalTime riderEnd = riderResults[riderResults.length - 1];
+		LocalTime adjustedRiderEnd = riderEnd;
 		Duration adjustedElapsedTime;
-		if (stage.getType() == StageType.TT) {
-			adjustedElapsedTime = Duration.between(riderStart, riderEnd);
-		}
-		else {
+		if (stage.getType() != StageType.TT) {
 			Duration comparisonWindow = Duration.ofSeconds(results.size());
 			Duration oneSecond = Duration.ofSeconds(1);
 			LocalTime[] ends = results.values().stream()
@@ -236,7 +237,6 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 					.filter(end -> end.isBefore(riderEnd))
 					.sorted(Comparator.reverseOrder())
 					.toArray(LocalTime[]::new);
-			LocalTime adjustedRiderEnd = riderEnd;
 			for (LocalTime end : beforeEnds) {
 				Duration difference = Duration.between(end, adjustedRiderEnd);
 				if (difference.compareTo(oneSecond) <= 0) {
@@ -251,20 +251,20 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 					.toArray(LocalTime[]::new);
 			for (LocalTime end : afterEnds) {
 				Duration difference = Duration.between(adjustedRiderEnd, end);
- 				if (difference.abs().compareTo(oneSecond) <= 0 ||
+				if (difference.abs().compareTo(oneSecond) <= 0 ||
 						difference.abs().compareTo(Duration.ofDays(1).minus(oneSecond)) >= 0) {
-					 adjustedRiderEnd = end;
+					adjustedRiderEnd = end;
 				} else {
-					 break;
+					break;
 				}
 			}
-			if (riderStart.isBefore(adjustedRiderEnd)) {
-				adjustedElapsedTime = Duration.between(riderStart, adjustedRiderEnd);
-			} else {
-				adjustedElapsedTime = Duration.between(riderStart, LocalTime.MAX)
-						.plus(Duration.ofNanos(1))
-						.plus(Duration.between(LocalTime.MIDNIGHT, adjustedRiderEnd));
-			}
+		}
+		if (riderStart.isBefore(adjustedRiderEnd)) {
+			adjustedElapsedTime = Duration.between(riderStart, adjustedRiderEnd);
+		} else {
+			adjustedElapsedTime = Duration.between(riderStart, LocalTime.MAX)
+					.plus(Duration.ofNanos(1))
+					.plus(Duration.between(LocalTime.MIDNIGHT, adjustedRiderEnd));
 		}
 		int hours = adjustedElapsedTime.toHoursPart();
 		int minutes = adjustedElapsedTime.toMinutesPart();
@@ -340,5 +340,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			if (optionalEntity.isPresent()) return subEntityClass.cast(optionalEntity.get());
 		}
 		throw new IDNotRecognisedException();
+	}
+	private void removeRiderResults(Rider rider) {
+		for (Entity race : races) {
+			ArrayList<Stage> stages = ((Race) race).getChildren();
+			for (Stage stage : stages) {
+				stage.getResults().remove(rider);
+			}
+		}
 	}
 }

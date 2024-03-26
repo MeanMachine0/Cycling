@@ -147,20 +147,6 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		return team.id;
 	}
 
-	private static void validateName(ArrayList<Entity> entities, String name) throws InvalidNameException, IllegalNameException {
-		if (name == null || name.isEmpty() || name.length() > 30) {
-			throw new InvalidNameException();
-		}
-		for (char c : name.toCharArray()) {
-			if (Character.isWhitespace(c)) {
-				throw new InvalidNameException();
-			}
-		}
-		for (Entity entity : entities) {
-			if (entity.getName().equals(name)) throw new IllegalNameException();
-		}
-	}
-
 	@Override
 	public void removeTeam(int teamId) throws IDNotRecognisedException {
 		Team team = (Team) getEntity(teamId, teams).orElseThrow(IDNotRecognisedException::new);
@@ -281,16 +267,14 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int[] getRidersRankInStage(int stageId) throws IDNotRecognisedException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		Map<Rider, LocalTime[]> results = stage.getResults();
-		return results.entrySet().stream()
-				.map(entry -> {
-					int riderId = entry.getKey().id;
-					LocalTime[] times = entry.getValue();
-					LocalTime timeElapsed = timeElapsed(times[0], times[times.length - 1]);
-					return new AbstractMap.SimpleEntry<>(riderId, timeElapsed);
-				})
+		ArrayList<AbstractMap.SimpleEntry<Integer, LocalTime>> idsAdjustedElapsedTimes = new ArrayList<>();
+		for (Map.Entry<Rider, LocalTime[]> entry : stage.getResults().entrySet()) {
+			LocalTime adjustedElapsedTime = getRiderAdjustedElapsedTimeInStage(stageId, entry.getKey().id);
+			idsAdjustedElapsedTimes.add(new AbstractMap.SimpleEntry<>(entry.getKey().id, adjustedElapsedTime));
+		}
+		return idsAdjustedElapsedTimes.stream()
 				.sorted(Map.Entry.comparingByValue())
-				.mapToInt(Map.Entry::getKey)
+				.mapToInt(AbstractMap.SimpleEntry::getKey)
 				.toArray();
 	}
 
@@ -375,6 +359,19 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			for (Stage stage : stages) {
 				stage.getResults().remove(rider);
 			}
+		}
+	}
+	private void validateName(ArrayList<Entity> entities, String name) throws InvalidNameException, IllegalNameException {
+		if (name == null || name.isEmpty() || name.length() > 30) {
+			throw new InvalidNameException();
+		}
+		for (char c : name.toCharArray()) {
+			if (Character.isWhitespace(c)) {
+				throw new InvalidNameException();
+			}
+		}
+		for (Entity entity : entities) {
+			if (entity.getName().equals(name)) throw new IllegalNameException();
 		}
 	}
 	private void validateStageState(Stage stage) throws InvalidStageStateException {

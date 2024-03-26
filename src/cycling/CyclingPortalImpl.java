@@ -85,6 +85,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			Double length) throws IDNotRecognisedException, InvalidLocationException, InvalidStageStateException,
 		InvalidStageTypeException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		validateStageState(stage);
 		if (location > stage.getLength()) throw new InvalidLocationException();
 		if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
 		Climb checkpoint = new Climb(nextId++, "", type, location, averageGradient, length);
@@ -97,6 +98,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public int addIntermediateSprintToStage(int stageId, double location) throws IDNotRecognisedException,
 			InvalidLocationException, InvalidStageStateException, InvalidStageTypeException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		validateStageState(stage);
 		if (location > stage.getLength()) throw new InvalidLocationException();
 		if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
 		Checkpoint checkpoint = new Checkpoint(nextId++, "", CheckpointType.SPRINT, location);
@@ -111,7 +113,14 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			ArrayList<Entity> stages = new ArrayList<>(((Race) race).getChildren());
 			for (Entity stage : stages) {
 				ArrayList<Checkpoint> checkpoints = ((Stage) stage).getChildren();
-				if (checkpoints.removeIf(checkpoint -> checkpoint.id == checkpointId)) return;
+				Optional<Checkpoint> optionalCheckpoint = checkpoints.stream()
+						.filter(checkpoint -> checkpoint.id == checkpointId)
+						.findFirst();
+				if (optionalCheckpoint.isPresent()) {
+					validateStageState((Stage) stage);
+					checkpoints.remove(optionalCheckpoint.get());
+					return;
+				}
 			}
 		}
 		throw new IDNotRecognisedException();
@@ -119,8 +128,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void concludeStagePreparation(int stageId) throws IDNotRecognisedException, InvalidStageStateException {
-		// TODO Auto-generated method stub
-
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		validateStageState(stage);
+		stage.setState("waiting for results");
 	}
 
 	@Override
@@ -195,6 +205,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			throws IDNotRecognisedException, DuplicatedResultException, InvalidCheckpointTimesException,
 			InvalidStageStateException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		validateStageState(stage);
 		if (checkpoints.length != stage.numCriticalPoints()) throw new InvalidCheckpointTimesException();
 		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
 		stage.addResult(rider, checkpoints);
@@ -365,5 +376,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 				stage.getResults().remove(rider);
 			}
 		}
+	}
+	private void validateStageState(Stage stage) throws InvalidStageStateException {
+		String currentState = stage.getState();
+		if (currentState.equals("waiting for results")) throw new InvalidStageStateException();
 	}
 }

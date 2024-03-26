@@ -285,9 +285,14 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public LocalTime[] getRankedAdjustedElapsedTimesInStage(int stageId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		ArrayList<LocalTime> adjustedElapsedTimesInStage = new ArrayList<>();
+		for (Map.Entry<Rider, LocalTime[]> entry : stage.getResults().entrySet()) {
+			LocalTime adjustedElapsedTime = getRiderAdjustedElapsedTimeInStage(stageId, entry.getKey().id);
+			adjustedElapsedTimesInStage.add(adjustedElapsedTime);
+		}
+        return adjustedElapsedTimesInStage.stream().sorted().toArray(LocalTime[]::new);
+    }
 
 	@Override
 	public int[] getRidersPointsInStage(int stageId) throws IDNotRecognisedException {

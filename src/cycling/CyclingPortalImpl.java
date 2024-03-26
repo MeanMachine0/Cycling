@@ -269,8 +269,18 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getRidersRankInStage(int stageId) throws IDNotRecognisedException {
-
-		return null;
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Map<Rider, LocalTime[]> results = stage.getResults();
+		return results.entrySet().stream()
+				.map(entry -> {
+					int riderId = entry.getKey().id;
+					LocalTime[] times = entry.getValue();
+					LocalTime timeElapsed = timeElapsed(times[0], times[times.length - 1]);
+					return new AbstractMap.SimpleEntry<>(riderId, timeElapsed);
+				})
+				.sorted(Map.Entry.comparingByValue())
+				.mapToInt(Map.Entry::getKey)
+				.toArray();
 	}
 
 	@Override

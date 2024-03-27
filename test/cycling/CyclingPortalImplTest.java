@@ -386,8 +386,8 @@ class CyclingPortalImplTest {
         int dadId = portal.createRider(parentsId, "Tim", 1970);
         int mumId = portal.createRider(parentsId, "Annie", 1973);
         LocalTime[] bouncerCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(1)};
-        LocalTime[] fluffyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(2)};
-        LocalTime[] stormyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(6)};
+        LocalTime[] fluffyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 45), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(2)};
+        LocalTime[] stormyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 15), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(6)};
         LocalTime[] dadCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4)};
         LocalTime[] mumCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(2)};
         LocalTime[] danCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(1)};
@@ -404,8 +404,8 @@ class CyclingPortalImplTest {
         // act
         int[] riderIds = portal.getRidersRankInStage(stageId);
         // assert
-        assertEquals(riderIds[0], stormyId);
-        assertEquals(riderIds[1], dadId);
+        int[] expectedRiderIds = { stormyId, dadId, mumId, danId, joelId, bouncerId, fluffyId, myId };
+        assert Arrays.equals(riderIds, expectedRiderIds);
     }
     @org.junit.jupiter.api.Test
     void getRankedAdjustedElapsedTimesInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
@@ -432,7 +432,7 @@ class CyclingPortalImplTest {
         LocalTime[] stormyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4).minusNanos(1)};
         LocalTime[] dadCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4)};
         LocalTime[] mumCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(2)};
-        LocalTime[] danCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(1)};
+        LocalTime[] danCriticalTimes = {LocalTime.NOON.plusMinutes(15), LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(1)};
         LocalTime[] joelCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT};
         LocalTime[] myCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(3)};
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
@@ -445,9 +445,9 @@ class CyclingPortalImplTest {
         portal.registerRiderResultsInStage(stageId, mumId, mumCriticalTimes);
         LocalTime myAdjustedElapsedTime = portal.getRiderAdjustedElapsedTimeInStage(stageId, myId);
         LocalTime[] expectedRankedAdjustedElapsedTimes = {
+                myAdjustedElapsedTime.minusMinutes(15),
                 myAdjustedElapsedTime.minusSeconds(2).minusNanos(1),
                 myAdjustedElapsedTime.minusSeconds(2).minusNanos(1),
-                myAdjustedElapsedTime,
                 myAdjustedElapsedTime,
                 myAdjustedElapsedTime,
                 myAdjustedElapsedTime,

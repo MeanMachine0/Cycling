@@ -267,31 +267,37 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int[] getRidersRankInStage(int stageId) throws IDNotRecognisedException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		ArrayList<AbstractMap.SimpleEntry<Integer, LocalTime>> idsAdjustedElapsedTimes = new ArrayList<>();
-		for (Map.Entry<Rider, LocalTime[]> entry : stage.getResults().entrySet()) {
-			LocalTime adjustedElapsedTime = getRiderAdjustedElapsedTimeInStage(stageId, entry.getKey().id);
-			idsAdjustedElapsedTimes.add(new AbstractMap.SimpleEntry<>(entry.getKey().id, adjustedElapsedTime));
-		}
-		return idsAdjustedElapsedTimes.stream()
+		Map<Rider, LocalTime[]> results = stage.getResults();
+		return results.entrySet().stream()
+				.map(entry -> {
+					int riderId = entry.getKey().id;
+					LocalTime[] times = entry.getValue();
+					LocalTime timeElapsed = timeElapsed(times[0], times[times.length - 1]);
+					return new AbstractMap.SimpleEntry<>(riderId, timeElapsed);
+				})
 				.sorted(Map.Entry.comparingByValue())
-				.mapToInt(AbstractMap.SimpleEntry::getKey)
+				.mapToInt(Map.Entry::getKey)
 				.toArray();
 	}
 
 	@Override
 	public LocalTime[] getRankedAdjustedElapsedTimesInStage(int stageId) throws IDNotRecognisedException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		ArrayList<LocalTime> adjustedElapsedTimesInStage = new ArrayList<>();
+		ArrayList<AbstractMap.SimpleEntry<LocalTime, LocalTime>> elapsedAdjustedElapsedTimes = new ArrayList<>();
 		for (Map.Entry<Rider, LocalTime[]> entry : stage.getResults().entrySet()) {
+			LocalTime[] times = entry.getValue();
+			LocalTime elapsedTime = timeElapsed(times[0], times[times.length - 1]);
 			LocalTime adjustedElapsedTime = getRiderAdjustedElapsedTimeInStage(stageId, entry.getKey().id);
-			adjustedElapsedTimesInStage.add(adjustedElapsedTime);
+			elapsedAdjustedElapsedTimes.add(new AbstractMap.SimpleEntry<>(elapsedTime, adjustedElapsedTime));
 		}
-        return adjustedElapsedTimesInStage.stream().sorted().toArray(LocalTime[]::new);
+		return elapsedAdjustedElapsedTimes.stream()
+				.sorted(Map.Entry.comparingByValue())
+				.map(AbstractMap.SimpleEntry::getValue)
+				.toArray(LocalTime[]::new);
     }
 
 	@Override
 	public int[] getRidersPointsInStage(int stageId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

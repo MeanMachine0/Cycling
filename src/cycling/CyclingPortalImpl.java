@@ -298,7 +298,77 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getRidersPointsInStage(int stageId) throws IDNotRecognisedException {
-		return null;
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Map<Rider, LocalTime[]> results = stage.getResults();
+		ArrayList<Checkpoint> checkpoints = stage.getChildren();
+		int[] rankedRiderIds = getRidersRankInStage(stageId);
+		Checkpoint[] sortedCheckpoints = checkpoints.stream()
+				.sorted(Comparator.comparingDouble(Checkpoint::getLocation))
+				.toArray(Checkpoint[]::new);
+		ArrayList<AbstractMap.SimpleEntry<Checkpoint, Integer>> sprints = new ArrayList<>();
+		for (int i = 0; i < sortedCheckpoints.length; i++) {
+			Checkpoint checkpoint = sortedCheckpoints[i];
+			if (checkpoint.type.equals(CheckpointType.SPRINT)) {
+				sprints.add(new AbstractMap.SimpleEntry<>(checkpoint, i + 1));
+			}
+		}
+		ArrayList<AbstractMap.SimpleEntry<Rider, Pair<ArrayList<LocalTime>, Integer>>> riderMaps = new ArrayList<>();
+        for (int rankedRiderId : rankedRiderIds) {
+            Rider rider = getEntity(rankedRiderId, narrow(teams, Team.class), Rider.class);
+            LocalTime[] times = results.get(rider);
+            LocalTime elapsedTime = timeElapsed(times[0], times[times.length - 1]);
+            ArrayList<LocalTime> relevantTimes = new ArrayList<>();
+            relevantTimes.add(elapsedTime);
+            for (AbstractMap.SimpleEntry<Checkpoint, Integer> sprint : sprints) {
+                int sprintIndex = sprint.getValue();
+                LocalTime sprintElapsedTime = timeElapsed(times[sprintIndex - 1], times[sprintIndex]);
+                relevantTimes.add(sprintElapsedTime);
+            }
+            riderMaps.add(new AbstractMap.SimpleEntry<>(rider, new Pair<>(relevantTimes, 0)));
+        }
+		ArrayList<LocalTime> rankedElapsedTimes = (ArrayList<LocalTime>) List.of(riderMaps.stream()
+				.map(entry -> entry.getValue().getOne().get(0))
+				.sorted(Comparator.reverseOrder())
+				.toArray(LocalTime[]::new));
+		ArrayList<ArrayList<LocalTime>> sprintsRankedElapsedTimes = new ArrayList<>();
+		for (AbstractMap.SimpleEntry<Rider, Pair<ArrayList<LocalTime>, Integer>> riderMap : riderMaps) {
+			ArrayList<LocalTime> times = riderMap.getValue().getOne();
+			if (times.size() > 1) {
+				for (int i = 1; i < sprints.size() + 1; i++) {
+					final int finalI = i;
+					sprintsRankedElapsedTimes.add((ArrayList<LocalTime>) List.of(riderMaps
+							.stream()
+							.map(entry -> entry.getValue().getOne().get(finalI))
+							.sorted(Comparator.reverseOrder())
+							.toArray(LocalTime[]::new)));
+				}
+			}
+		}
+        for (AbstractMap.SimpleEntry<Rider, Pair<ArrayList<LocalTime>, Integer>> riderMap : riderMaps) {
+			Pair<ArrayList<LocalTime>, Integer> timesPoints = riderMap.getValue();
+            ArrayList<LocalTime> times = timesPoints.getOne();
+            LocalTime elapsedTime = times.get(0);
+            int finishingPosition = rankedElapsedTimes.indexOf(elapsedTime);
+            if (finishingPosition < 15) {
+				timesPoints.setTwo(Stage.SPRINTER_POINTS.get(stage.getType()).get(finishingPosition));
+            }
+            if (times.size() > 1) {
+				for (int i = 0; i < sprints.size(); i++) {
+					LocalTime sprintElapsedTime = riderMap.getValue().getOne().get(i + 1);
+					ArrayList<LocalTime> sprintRankedElapsedTimes = sprintsRankedElapsedTimes.get(i);
+					int sprintFinishingPosition = sprintRankedElapsedTimes.indexOf(sprintElapsedTime);
+					if (sprintFinishingPosition < 15) {
+						Integer currentPoints = timesPoints.getTwo();
+						timesPoints.setTwo(currentPoints +
+								Checkpoint.INTERMEDIATE_SPRINT_POINTS[sprintFinishingPosition]);
+					}
+				}
+			}
+        }
+		return riderMaps.stream()
+				.mapToInt(entry -> entry.getValue().getTwo())
+				.sorted()
+				.toArray();
 	}
 
 	@Override

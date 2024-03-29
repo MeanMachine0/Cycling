@@ -16,13 +16,13 @@ public class Stage extends Entity implements HasChildren {
 
     static {
         SPRINTER_POINTS.put(StageType.FLAT,
-                (ArrayList<Integer>) List.of(50, 30, 20, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2));
+                new ArrayList<>(List.of(50, 30, 20, 18, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2)));
         SPRINTER_POINTS.put(StageType.MEDIUM_MOUNTAIN,
-                (ArrayList<Integer>) List.of(30, 25, 22, 19, 17, 15, 13, 11, 9, 7, 6, 5, 4, 3, 2));
+                new ArrayList<>(List.of(30, 25, 22, 19, 17, 15, 13, 11, 9, 7, 6, 5, 4, 3, 2)));
         SPRINTER_POINTS.put(StageType.HIGH_MOUNTAIN,
-                (ArrayList<Integer>) List.of(20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1));
+                new ArrayList<>(List.of(20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)));
         SPRINTER_POINTS.put(StageType.TT,
-                (ArrayList<Integer>) List.of(20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1));
+                new ArrayList<>(List.of(20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)));
     }
     public Stage(int id, String name, String description, double length, LocalDateTime startTime, StageType type) {
         super(id, name);

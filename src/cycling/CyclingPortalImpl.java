@@ -201,8 +201,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public LocalTime[] getRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
-		Optional<LocalTime[]> riderResults = Optional.ofNullable(stage.getResults().get(rider));
-		return riderResults.orElseGet(() -> new LocalTime[0]);
+		Optional<LocalTime[]> optionalRiderCriticalTimes = Optional.ofNullable(stage.getResults().get(rider));
+		if (optionalRiderCriticalTimes.isEmpty()) return new LocalTime[0];
+		ArrayList<LocalTime> riderCriticalTimes = new ArrayList<>(List.of(optionalRiderCriticalTimes.get()));
+		LocalTime start = riderCriticalTimes.remove(0);
+		LocalTime end = riderCriticalTimes.remove(riderCriticalTimes.size() - 1);
+		riderCriticalTimes.add(timeElapsed(start, end));
+		return riderCriticalTimes.toArray(LocalTime[]::new);
 	}
 
 	@Override
@@ -321,8 +326,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
             relevantTimes.add(elapsedTime);
             for (AbstractMap.SimpleEntry<Checkpoint, Integer> sprint : sprints) {
                 int sprintIndex = sprint.getValue();
-                LocalTime sprintElapsedTime = timeElapsed(times[sprintIndex - 1], times[sprintIndex]);
-                relevantTimes.add(sprintElapsedTime);
+                LocalTime end = times[sprintIndex];
+                relevantTimes.add(end);
             }
             riderMaps.add(new AbstractMap.SimpleEntry<>(rider, new Pair<>(relevantTimes, 0)));
         }
@@ -330,15 +335,15 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 				.map(entry -> entry.getValue().getOne().get(0))
 				.sorted(Comparator.reverseOrder())
 				.toArray(LocalTime[]::new));
-		ArrayList<ArrayList<LocalTime>> sprintsRankedElapsedTimes = new ArrayList<>();
+		ArrayList<ArrayList<LocalTime>> sprintsRankedEnds = new ArrayList<>();
 		for (AbstractMap.SimpleEntry<Rider, Pair<ArrayList<LocalTime>, Integer>> riderMap : riderMaps) {
 			ArrayList<LocalTime> times = riderMap.getValue().getOne();
 			if (times.size() > 1) {
 				for (int i = 1; i < sprints.size() + 1; i++) {
 					final int finalI = i;
-					sprintsRankedElapsedTimes.add((ArrayList<LocalTime>) List.of(riderMaps
+					sprintsRankedEnds.add((ArrayList<LocalTime>) List.of(riderMaps
 							.stream()
-							.map(entry -> entry.getValue().getOne().get(finalI))
+							.map(entry -> new Pair<>(entry.getValue().getOne().get(finalI),))
 							.sorted(Comparator.reverseOrder())
 							.toArray(LocalTime[]::new)));
 				}
@@ -355,8 +360,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
             if (times.size() > 1) {
 				for (int i = 0; i < sprints.size(); i++) {
 					LocalTime sprintElapsedTime = riderMap.getValue().getOne().get(i + 1);
-					ArrayList<LocalTime> sprintRankedElapsedTimes = sprintsRankedElapsedTimes.get(i);
-					int sprintFinishingPosition = sprintRankedElapsedTimes.indexOf(sprintElapsedTime);
+					ArrayList<LocalTime> sprintRankedEnds = sprintsRankedEnds.get(i);
+					int sprintFinishingPosition = sprintRankedEnds.indexOf(sprintElapsedTime);
 					if (sprintFinishingPosition < 15) {
 						Integer currentPoints = timesPoints.getTwo();
 						timesPoints.setTwo(currentPoints +
@@ -366,8 +371,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			}
         }
 		return riderMaps.stream()
-				.mapToInt(entry -> entry.getValue().getTwo())
-				.sorted()
+				.map(entry -> new Pair<>(entry.getValue().getOne().get(0), entry.getValue().getTwo()))
+				.sorted(Comparator.comparing((Pair<LocalTime, Integer> pair) -> pair.getOne()).reversed())
+				.mapToInt(Pair::getTwo)
 				.toArray();
 	}
 

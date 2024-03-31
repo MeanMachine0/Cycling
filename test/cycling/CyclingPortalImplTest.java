@@ -211,38 +211,36 @@ class CyclingPortalImplTest {
     @org.junit.jupiter.api.Test
     void registerRiderResultsInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
-        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         int stageId = portal.addStageToRace(raceId, "Egg",
-                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+                "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
         portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
         portal.addIntermediateSprintToStage(stageId, 4);
         int teamId = portal.createTeam("Apes", "Zoo escapees");
         portal.createRider(teamId, "Daniel", 1999);
         portal.createRider(teamId, "Joel", 2001);
         int myId = portal.createRider(teamId, "Marcus", 2004);
-        LocalTime now = LocalTime.now();
-        LocalTime[] criticalTimes = { now, now.plusMinutes(50), now.plusMinutes(62), now.plusMinutes(70)};
+        LocalTime[] criticalTimes = { start.toLocalTime(), start.plusMinutes(50).toLocalTime(), start.plusMinutes(62).toLocalTime(), start.plusMinutes(70).toLocalTime()};
         // act
         portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
         // assert
-        assert Arrays.equals(new LocalTime[] { criticalTimes[1], criticalTimes[2], LocalTime.of(1, 10) }, portal.getRiderResultsInStage(stageId, myId));
+        assertArrayEquals(new LocalTime[] { criticalTimes[1], criticalTimes[2], LocalTime.of(1, 10) }, portal.getRiderResultsInStage(stageId, myId));
     }
     @org.junit.jupiter.api.Test
     void registerRiderResultsInStage_duplicateResult() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
-        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         int stageId = portal.addStageToRace(raceId, "Egg",
-                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+                "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
         portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
         portal.addIntermediateSprintToStage(stageId, 4);
         int teamId = portal.createTeam("Apes", "Zoo escapees");
         portal.createRider(teamId, "Daniel", 1999);
         portal.createRider(teamId, "Joel", 2001);
         int myId = portal.createRider(teamId, "Marcus", 2004);
-        LocalTime now = LocalTime.now();
-        LocalTime[] criticalTimes = { now, now.plusMinutes(50), now.plusMinutes(62), now.plusMinutes(70)};
+        LocalTime[] criticalTimes = toLocalTimeArray(new LocalDateTime[]{start, start.plusMinutes(50), start.plusMinutes(62), start.plusMinutes(70)});
         portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
         // act
         assertThrows(DuplicatedResultException.class, () -> {
@@ -280,10 +278,10 @@ class CyclingPortalImplTest {
     @org.junit.jupiter.api.Test
     void getRiderAdjustedElapsedTimeInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
-        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         int stageId = portal.addStageToRace(raceId, "Egg",
-                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+                "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
         portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
         portal.addIntermediateSprintToStage(stageId, 4);
         int teamId = portal.createTeam("Apes", "Zoo escapees");
@@ -297,17 +295,15 @@ class CyclingPortalImplTest {
         int myId = portal.createRider(teamId, "Marcus", 2004);
         int dadId = portal.createRider(parentsId, "Tim", 1970);
         int mumId = portal.createRider(parentsId, "Annie", 1973);
-        LocalTime[] bouncerCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(1) };
-        LocalTime[] fluffyCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(2) };
-        LocalTime[] stormyCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4).minusNanos(1) };
-        LocalTime[] dadCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4) };
-        LocalTime[] mumCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(2) };
-        LocalTime[] danCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(1) };
-        LocalTime[] joelCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT };
-        LocalTime[] myCriticalTimes = { LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(3) };
-        Duration myDuration = Duration.between(myCriticalTimes[0], LocalTime.MAX)
-                .plusNanos(1)
-                .plus(Duration.between(LocalTime.MIDNIGHT, myCriticalTimes[myCriticalTimes.length - 1]));
+        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(1) });
+        LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(2) });
+        LocalTime[] stormyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(4).minusNanos(1) });
+        LocalTime[] dadCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(4) });
+        LocalTime[] mumCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(2) });
+        LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(1) });
+        LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555) });
+        LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(3) });
+        Duration myDuration = Duration.ofMinutes(555).plusSeconds(3);
         LocalTime myElapsedTime = LocalTime.of(myDuration.toHoursPart(), myDuration.toMinutesPart(), myDuration.toSecondsPart(), myDuration.toNanosPart());
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
@@ -325,10 +321,10 @@ class CyclingPortalImplTest {
     @org.junit.jupiter.api.Test
     void getRiderAdjustedElapsedTimeInStage_TT() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
-        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         int stageId = portal.addStageToRace(raceId, "Egg",
-                "Carry an egg", 3.141 + 3, eggStartTime, StageType.TT);
+                "Carry an egg", 3.141 + 3, start, StageType.TT);
         int teamId = portal.createTeam("Apes", "Zoo escapees");
         int parentsId = portal.createTeam("Great_Apes", "The founding zoo escapees");
         int petsId = portal.createTeam("Humans", "Zookeepers");
@@ -340,16 +336,14 @@ class CyclingPortalImplTest {
         int myId = portal.createRider(teamId, "Marcus", 2004);
         int dadId = portal.createRider(parentsId, "Tim", 1970);
         int mumId = portal.createRider(parentsId, "Annie", 1973);
-        LocalTime[] bouncerCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.plusSeconds(1) };
-        LocalTime[] fluffyCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.plusSeconds(2) };
-        LocalTime[] dadCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.minusSeconds(4) };
-        LocalTime[] mumCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.minusSeconds(2) };
-        LocalTime[] danCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.minusSeconds(1) };
-        LocalTime[] joelCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT };
-        LocalTime[] myCriticalTimes = { LocalTime.NOON, LocalTime.MIDNIGHT.plusSeconds(3) };
-        Duration myDuration = Duration.between(myCriticalTimes[0], LocalTime.MAX)
-                .plusNanos(1)
-                .plus(Duration.between(LocalTime.MIDNIGHT, myCriticalTimes[myCriticalTimes.length - 1]));
+        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).plusSeconds(1) });
+        LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).plusSeconds(2) });
+        LocalTime[] dadCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).minusSeconds(4) });
+        LocalTime[] mumCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).minusSeconds(2) });
+        LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).minusSeconds(1) });
+        LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555) });
+        LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).plusSeconds(3) });
+        Duration myDuration = Duration.ofMinutes(555).plusSeconds(3);
         LocalTime myElapsedTime = LocalTime.of(myDuration.toHoursPart(), myDuration.toMinutesPart(), myDuration.toSecondsPart(), myDuration.toNanosPart());
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
@@ -363,15 +357,15 @@ class CyclingPortalImplTest {
         // assert
         assertEquals(myElapsedTime, myAdjustedElapsedTime);
         assertNull(portal.getRiderAdjustedElapsedTimeInStage(stageId, stormyId));
-        assert portal.getRiderResultsInStage(stageId, stormyId).length == 0;
+        assertEquals(0, portal.getRiderResultsInStage(stageId, stormyId).length);
     }
     @org.junit.jupiter.api.Test
     void getRidersRankInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
-        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         int stageId = portal.addStageToRace(raceId, "Egg",
-                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+                "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
         portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
         portal.addIntermediateSprintToStage(stageId, 4);
         int teamId = portal.createTeam("Apes", "Zoo escapees");
@@ -385,14 +379,14 @@ class CyclingPortalImplTest {
         int myId = portal.createRider(teamId, "Marcus", 2004);
         int dadId = portal.createRider(parentsId, "Tim", 1970);
         int mumId = portal.createRider(parentsId, "Annie", 1973);
-        LocalTime[] bouncerCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(1)};
-        LocalTime[] fluffyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 45), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(2)};
-        LocalTime[] stormyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 15), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(6)};
-        LocalTime[] dadCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4)};
-        LocalTime[] mumCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(2)};
-        LocalTime[] danCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(1)};
-        LocalTime[] joelCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT};
-        LocalTime[] myCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(3)};
+        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(1) });
+        LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(2) });
+        LocalTime[] stormyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(4).minusNanos(1) });
+        LocalTime[] dadCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(4) });
+        LocalTime[] mumCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(2) });
+        LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(1) });
+        LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555) });
+        LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(3) });
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
@@ -405,15 +399,15 @@ class CyclingPortalImplTest {
         int[] riderIds = portal.getRidersRankInStage(stageId);
         // assert
         int[] expectedRiderIds = { stormyId, dadId, mumId, danId, joelId, bouncerId, fluffyId, myId };
-        assert Arrays.equals(riderIds, expectedRiderIds);
+        assertArrayEquals(riderIds, expectedRiderIds);
     }
     @org.junit.jupiter.api.Test
     void getRankedAdjustedElapsedTimesInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
-        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         int stageId = portal.addStageToRace(raceId, "Egg",
-                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+                "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
         portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
         portal.addIntermediateSprintToStage(stageId, 4);
         int teamId = portal.createTeam("Apes", "Zoo escapees");
@@ -427,14 +421,14 @@ class CyclingPortalImplTest {
         int myId = portal.createRider(teamId, "Marcus", 2004);
         int dadId = portal.createRider(parentsId, "Tim", 1970);
         int mumId = portal.createRider(parentsId, "Annie", 1973);
-        LocalTime[] bouncerCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(1)};
-        LocalTime[] fluffyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(2)};
-        LocalTime[] stormyCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4).minusNanos(1)};
-        LocalTime[] dadCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(4)};
-        LocalTime[] mumCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(2)};
-        LocalTime[] danCriticalTimes = {LocalTime.NOON.plusMinutes(15), LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.minusSeconds(1)};
-        LocalTime[] joelCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT};
-        LocalTime[] myCriticalTimes = {LocalTime.NOON, LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(3)};
+        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(1) });
+        LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(2) });
+        LocalTime[] stormyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(4).minusNanos(1) });
+        LocalTime[] dadCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(4) });
+        LocalTime[] mumCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(2) });
+        LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(1) });
+        LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555) });
+        LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(3) });
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
@@ -445,9 +439,9 @@ class CyclingPortalImplTest {
         portal.registerRiderResultsInStage(stageId, mumId, mumCriticalTimes);
         LocalTime myAdjustedElapsedTime = portal.getRiderAdjustedElapsedTimeInStage(stageId, myId);
         LocalTime[] expectedRankedAdjustedElapsedTimes = {
-                myAdjustedElapsedTime.minusMinutes(15),
                 myAdjustedElapsedTime.minusSeconds(2).minusNanos(1),
                 myAdjustedElapsedTime.minusSeconds(2).minusNanos(1),
+                myAdjustedElapsedTime,
                 myAdjustedElapsedTime,
                 myAdjustedElapsedTime,
                 myAdjustedElapsedTime,
@@ -457,15 +451,15 @@ class CyclingPortalImplTest {
         // act
         LocalTime[] rankedAdjustedElapsedTimes = portal.getRankedAdjustedElapsedTimesInStage(stageId);
         // assert
-        assert Arrays.equals(expectedRankedAdjustedElapsedTimes, rankedAdjustedElapsedTimes);
+        assertArrayEquals(expectedRankedAdjustedElapsedTimes, rankedAdjustedElapsedTimes);
     }
     @org.junit.jupiter.api.Test
     void getRidersPointsInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
-        LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         int stageId = portal.addStageToRace(raceId, "Egg",
-                "Carry an egg", 3.141 + 3, eggStartTime, StageType.MEDIUM_MOUNTAIN);
+                "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
         portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
         portal.addIntermediateSprintToStage(stageId, 4);
         portal.addIntermediateSprintToStage(stageId, 1.25);
@@ -480,14 +474,14 @@ class CyclingPortalImplTest {
         int myId = portal.createRider(teamId, "Marcus", 2004);
         int dadId = portal.createRider(parentsId, "Tim", 1970);
         int mumId = portal.createRider(parentsId, "Annie", 1973);
-        LocalTime[] bouncerCriticalTimes = {LocalTime.NOON, LocalTime.of(13, 37), LocalTime.of(19, 30), LocalTime.of(23, 37), LocalTime.MIDNIGHT.plusSeconds(1)};
-        LocalTime[] fluffyCriticalTimes = {LocalTime.NOON, LocalTime.of(13, 36), LocalTime.of(19, 45), LocalTime.of(23, 36), LocalTime.MIDNIGHT.plusSeconds(2)};
-        LocalTime[] stormyCriticalTimes = {LocalTime.NOON, LocalTime.of(13, 35), LocalTime.of(19, 15), LocalTime.of(23, 35), LocalTime.MIDNIGHT.minusSeconds(6)};
-        LocalTime[] dadCriticalTimes = {LocalTime.NOON, LocalTime.of(13, 34), LocalTime.of(19, 30), LocalTime.of(23, 34), LocalTime.MIDNIGHT.minusSeconds(4)};
-        LocalTime[] mumCriticalTimes = {LocalTime.NOON, LocalTime.of(13, 33), LocalTime.of(19, 30), LocalTime.of(23, 33), LocalTime.MIDNIGHT.minusSeconds(2)};
-        LocalTime[] danCriticalTimes = {LocalTime.NOON, LocalTime.of(13, 32), LocalTime.of(19, 30), LocalTime.of(23, 32), LocalTime.MIDNIGHT.minusSeconds(1)};
-        LocalTime[] joelCriticalTimes = {LocalTime.NOON, LocalTime.of(13, 31), LocalTime.of(19, 30), LocalTime.of(23, 31), LocalTime.MIDNIGHT};
-        LocalTime[] myCriticalTimes = {LocalTime.NOON, LocalTime.of(13, 29), LocalTime.of(19, 30), LocalTime.of(23, 30), LocalTime.MIDNIGHT.plusSeconds(3)};
+        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(237), start.plusMinutes(400), start.plusMinutes(557), start.plusMinutes(600).plusSeconds(1) });
+        LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(236), start.plusMinutes(415), start.plusMinutes(556), start.plusMinutes(600).plusSeconds(2) });
+        LocalTime[] stormyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(235), start.plusMinutes(385), start.plusMinutes(555), start.plusMinutes(600).minusSeconds(6) });
+        LocalTime[] dadCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(234), start.plusMinutes(400), start.plusMinutes(554), start.plusMinutes(600).minusSeconds(4) });
+        LocalTime[] mumCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(233), start.plusMinutes(400), start.plusMinutes(553), start.plusMinutes(600).minusSeconds(2) });
+        LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(232), start.plusMinutes(400), start.plusMinutes(552), start.plusMinutes(600).minusSeconds(1) });
+        LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(231), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600) });
+        LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(229), start.plusMinutes(400), start.plusMinutes(555), start.plusMinutes(600).plusSeconds(3) });
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
@@ -518,5 +512,10 @@ class CyclingPortalImplTest {
         assertThrows(InvalidStageStateException.class, () -> {
             portal.concludeStagePreparation(spoonStageId);
         });
+    }
+    private static LocalTime[] toLocalTimeArray(LocalDateTime[] times) {
+        return Arrays.stream(times)
+                .map(LocalDateTime::toLocalTime)
+                .toArray(LocalTime[]::new);
     }
 }

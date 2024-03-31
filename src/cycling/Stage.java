@@ -1,5 +1,6 @@
 package cycling;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -7,11 +8,11 @@ import java.util.*;
 public class Stage extends Entity implements HasChildren {
     private final String description;
     private final double length;
-    private final LocalDateTime startTime;
+    protected final LocalDateTime start;
     private final StageType type;
     private String state;
     private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
-    private final Map<Rider, LocalTime[]> results = new HashMap<>();
+    private final Map<Rider, LocalDateTime[]> results = new HashMap<>();
     public static final EnumMap<StageType, ArrayList<Integer>> SPRINTER_POINTS = new EnumMap<>(StageType.class);
 
     static {
@@ -24,18 +25,18 @@ public class Stage extends Entity implements HasChildren {
         SPRINTER_POINTS.put(StageType.TT,
                 new ArrayList<>(List.of(20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)));
     }
-    public Stage(int id, String name, String description, double length, LocalDateTime startTime, StageType type) {
+    public Stage(int id, String name, String description, double length, LocalDateTime start, StageType type) {
         super(id, name);
         this.description = description;
         this.length = length;
-        this.startTime = startTime;
+        this.start = start;
         this.type = type;
         state = "preparation";
     }
     @Override
     public String toString() {
         return "Stage[id="+id+", name="+name+", description="+description+", length="+length+
-                "km, startTime="+startTime+", type="+type+"]";
+                "km, start="+start+", type="+type+"]";
     }
 
     public String getDescription() {
@@ -44,9 +45,6 @@ public class Stage extends Entity implements HasChildren {
     public double getLength() {
         return length;
     }
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
     public StageType getType() {
         return type;
     }
@@ -54,11 +52,16 @@ public class Stage extends Entity implements HasChildren {
     public void setState(String state) { this.state = state; }
     @Override
     public ArrayList<Checkpoint> getChildren() { return checkpoints; }
-    public Map<Rider, LocalTime[]> getResults() { return results; }
-
+    public Map<Rider, LocalDateTime[]> getResults() { return results; }
     public int numCriticalPoints() { return checkpoints.size() + 2; }
-    public void addResult(Rider rider, LocalTime[] criticalTimes) throws DuplicatedResultException {
+    public void addResult(Rider rider, LocalDateTime[] criticalTimes) throws DuplicatedResultException {
         if (results.containsKey(rider)) throw new DuplicatedResultException();
         results.put(rider, criticalTimes);
+    }
+    public Duration timeElapsed(LocalDateTime riderEnd) {
+        return Duration.between(start, riderEnd);
+    }
+    public Duration ttTimeElapsed(LocalDateTime riderStart, LocalDateTime riderEnd) {
+        return Duration.between(riderStart, riderEnd);
     }
 }

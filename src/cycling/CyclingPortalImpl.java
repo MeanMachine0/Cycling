@@ -5,7 +5,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -327,15 +326,15 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			})
 			.toArray();
 		if (stage.isTimeTrial()) return ridersPoints;
-		Checkpoint[] checkpoints = stage.getChildren().toArray(Checkpoint[]::new);
-		ArrayList<Checkpoint> sprints = Arrays.stream(checkpoints)
+		ArrayList<Checkpoint> checkpoints = stage.getChildren();
+		ArrayList<Checkpoint> sprints = checkpoints.stream()
 				.filter(checkpoint -> !(checkpoint instanceof Climb))
 				.collect(Collectors.toCollection(ArrayList::new));
 		ArrayList<ArrayList<LocalDateTime>> sprintsTimes = rankedRiders.stream()
 				.map(rider -> {
 					LocalDateTime[] times = results.get(rider);
 					ArrayList<LocalDateTime> relevantTimes = new ArrayList<>();
-					for (Checkpoint sprint : sprints) relevantTimes.add(times[sprints.indexOf(sprint) + 1]);
+					for (Checkpoint sprint : sprints) relevantTimes.add(times[checkpoints.indexOf(sprint) + 1]);
 					return relevantTimes;
 				})
 				.collect(Collectors.toCollection(ArrayList::new));

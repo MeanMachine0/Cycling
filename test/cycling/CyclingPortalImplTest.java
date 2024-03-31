@@ -24,15 +24,11 @@ class CyclingPortalImplTest {
     }
     @org.junit.jupiter.api.Test
     void createTeam_emptyNameThrowsException() {
-        assertThrows(InvalidNameException.class, () -> {
-            portal.createTeam("", "Zoo escapees");
-        });
+        assertThrows(InvalidNameException.class, () -> portal.createTeam("", "Zoo escapees"));
     }
     @org.junit.jupiter.api.Test
     void removeTeam_idDoesNotExistThrowsException() {
-        assertThrows(IDNotRecognisedException.class, () -> {
-            portal.removeTeam(1);
-        });
+        assertThrows(IDNotRecognisedException.class, () -> portal.removeTeam(1));
     }
     @org.junit.jupiter.api.Test
     void getTeams_threeTeams() throws InvalidNameException, IllegalNameException {
@@ -81,9 +77,7 @@ class CyclingPortalImplTest {
    }
     @org.junit.jupiter.api.Test
     void createRace_emptyNameThrowsException() {
-        assertThrows(InvalidNameException.class, () -> {
-            portal.createRace("", "Zoo escapees");
-        });
+        assertThrows(InvalidNameException.class, () -> portal.createRace("", "Zoo escapees"));
     }
     @org.junit.jupiter.api.Test
     void addStageToRace() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException {
@@ -104,15 +98,13 @@ class CyclingPortalImplTest {
         assertEquals(stageIds[1], spoonStageId);
     }
     @org.junit.jupiter.api.Test
-    void addStageToRace_invalidLength() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException {
+    void addStageToRace_invalidLength() throws InvalidNameException, IllegalNameException {
         // arrange
         LocalDateTime eggStartTime = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         // assert
-        assertThrows(InvalidLengthException.class, () -> {
-            portal.addStageToRace(raceId, "Egg",
-                    "Carry an egg", 4.999999999, eggStartTime, StageType.MEDIUM_MOUNTAIN);
-        });
+        assertThrows(InvalidLengthException.class, () -> portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 4.999999999, eggStartTime, StageType.MEDIUM_MOUNTAIN));
     }
     @org.junit.jupiter.api.Test
     void getStageLength() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException {
@@ -243,9 +235,7 @@ class CyclingPortalImplTest {
         LocalTime[] criticalTimes = toLocalTimeArray(new LocalDateTime[]{start, start.plusMinutes(50), start.plusMinutes(62), start.plusMinutes(70)});
         portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
         // act
-        assertThrows(DuplicatedResultException.class, () -> {
-            portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
-        });
+        assertThrows(DuplicatedResultException.class, () -> portal.registerRiderResultsInStage(stageId, myId, criticalTimes));
     }
     @org.junit.jupiter.api.Test
     void deleteRiderResultsInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
@@ -270,7 +260,6 @@ class CyclingPortalImplTest {
     }
     @org.junit.jupiter.api.Test
     void duration_between() {
-        Duration oneSecond = Duration.ofSeconds(1);
         LocalTime justBeforeMidnight = LocalTime.of(23, 59, 59);
         Duration duration = Duration.between(justBeforeMidnight, LocalTime.MIDNIGHT);
         assert duration.isNegative();
@@ -319,7 +308,7 @@ class CyclingPortalImplTest {
         assertEquals(myElapsedTime.minusSeconds(5), myAdjustedElapsedTime);
     }
     @org.junit.jupiter.api.Test
-    void getRiderAdjustedElapsedTimeInStage_TT() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
+    void getRiderAdjustedElapsedTimeInStage_TT() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
         LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
@@ -497,7 +486,7 @@ class CyclingPortalImplTest {
         assert Arrays.equals(expectedRankedPoints, rankedPoints);
     }
     @org.junit.jupiter.api.Test
-    void getRidersPointsInStage_TT() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
+    void getRidersPointsInStage_TT() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, DuplicatedResultException, InvalidCheckpointTimesException {
         // arrange
         LocalDateTime start = LocalDateTime.now().plusDays(1);
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
@@ -508,7 +497,7 @@ class CyclingPortalImplTest {
         int petsId = portal.createTeam("Humans", "Zookeepers");
         int bouncerId = portal.createRider(petsId, "Bouncer", 1970);
         int fluffyId = portal.createRider(petsId, "Fluffy", 1970);
-        int stormyId = portal.createRider(petsId, "Stormy", 1970);
+        portal.createRider(petsId, "Stormy", 1970);
         int danId = portal.createRider(teamId, "Daniel", 1999);
         int joelId = portal.createRider(teamId, "Joel", 2001);
         int myId = portal.createRider(teamId, "Marcus", 2004);
@@ -546,9 +535,7 @@ class CyclingPortalImplTest {
         // act
         portal.concludeStagePreparation(spoonStageId);
         // assert
-        assertThrows(InvalidStageStateException.class, () -> {
-            portal.concludeStagePreparation(spoonStageId);
-        });
+        assertThrows(InvalidStageStateException.class, () -> portal.concludeStagePreparation(spoonStageId));
     }
     private static LocalTime[] toLocalTimeArray(LocalDateTime[] times) {
         return Arrays.stream(times)

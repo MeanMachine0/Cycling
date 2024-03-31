@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.Temporal;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -90,10 +91,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		validateStageState(stage);
 		if (location > stage.getLength()) throw new InvalidLocationException();
-		if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
-		Climb checkpoint = new Climb(nextId++, "", type, location, averageGradient, length);
-		ArrayList<Checkpoint> checkpoints = stage.getChildren();
-		checkpoints.add(checkpoint);
+		if (stage.isTimeTrial()) throw new InvalidStageTypeException();
+		Checkpoint checkpoint = new Climb(nextId++, "", type, location, averageGradient, length);
+		stage.addCheckpoint(checkpoint);
 		return checkpoint.id;
 	}
 
@@ -103,10 +103,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		validateStageState(stage);
 		if (location > stage.getLength()) throw new InvalidLocationException();
-		if (stage.getType() == StageType.TT) throw new InvalidStageTypeException();
+		if (stage.isTimeTrial()) throw new InvalidStageTypeException();
 		Checkpoint checkpoint = new Checkpoint(nextId++, "", CheckpointType.SPRINT, location);
-		ArrayList<Checkpoint> checkpoints = stage.getChildren();
-		checkpoints.add(checkpoint);
+		stage.addCheckpoint(checkpoint);
 		return checkpoint.id;
 	}
 
@@ -236,7 +235,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		if (optionalRiderResults.isEmpty()) return null;
 		LocalDateTime[] riderResults = optionalRiderResults.get();
 		LocalDateTime riderEnd = riderResults[riderResults.length - 1];
-		if (stage.getType() == StageType.TT) return toLocalTime((stage.ttTimeElapsed(riderResults[0], riderEnd)));
+		if (stage.isTimeTrial()) return toLocalTime((stage.ttTimeElapsed(riderResults[0], riderEnd)));
 		LocalDateTime[] sortedEnds = results.values().stream()
 				.map(times -> times[times.length - 1])
 				.filter(end -> end.isBefore(riderEnd))
@@ -267,7 +266,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 					LocalDateTime[] times = entry.getValue();
 					LocalDateTime riderEnd = times[times.length - 1];
 					Duration elapsedTime;
-					elapsedTime = stage.getType() == StageType.TT ?
+					elapsedTime = stage.isTimeTrial() ?
 							stage.ttTimeElapsed(times[0], riderEnd) :
 							stage.timeElapsed(riderEnd);
 					int riderId = entry.getKey().id;
@@ -286,7 +285,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			LocalDateTime[] times = entry.getValue();
 			LocalDateTime riderEnd = times[times.length - 1];
 			Duration elapsedTime;
-			if (stage.getType() == StageType.TT) elapsedTime = stage.ttTimeElapsed(times[0], riderEnd);
+			if (stage.isTimeTrial()) elapsedTime = stage.ttTimeElapsed(times[0], riderEnd);
 			else elapsedTime = stage.timeElapsed(riderEnd);
 			LocalTime adjustedElapsedTime = getRiderAdjustedElapsedTimeInStage(stageId, entry.getKey().id);
 			elapsedAdjustedElapsedTimes.add(new AbstractMap.SimpleEntry<>(toLocalTime(elapsedTime), adjustedElapsedTime));
@@ -301,82 +300,66 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public int[] getRidersPointsInStage(int stageId) throws IDNotRecognisedException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		Map<Rider, LocalDateTime[]> results = stage.getResults();
-		ArrayList<Checkpoint> checkpoints = stage.getChildren();
 		int[] rankedRiderIds = getRidersRankInStage(stageId);
-		Checkpoint[] sortedCheckpoints = checkpoints.stream()
-				.sorted(Comparator.comparingDouble(Checkpoint::getLocation))
-				.toArray(Checkpoint[]::new);
-		ArrayList<AbstractMap.SimpleEntry<Checkpoint, Integer>> sprints = new ArrayList<>();
-		for (int i = 0; i < sortedCheckpoints.length; i++) {
-			Checkpoint checkpoint = sortedCheckpoints[i];
-			if (checkpoint.type.equals(CheckpointType.SPRINT)) {
-				sprints.add(new AbstractMap.SimpleEntry<>(checkpoint, i + 1));
+		ArrayList<Rider> rankedRiders = new ArrayList<>();
+		for (int rankedRiderId : rankedRiderIds) {
+			rankedRiders.add(getEntity(rankedRiderId, narrow(teams, Team.class), Rider.class));
+		}
+		StageType stageType = stage.getType();
+		ArrayList<Duration> elapsedTimes = rankedRiders.stream()
+				.map(rider -> {
+					LocalDateTime[] times = results.get(rider);
+					return stage.isTimeTrial() ?
+							stage.ttTimeElapsed(times[0], times[times.length - 1]) :
+							stage.timeElapsed(times[times.length - 1]);
+				})
+				.collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<Duration> rankedElapsedTimes = elapsedTimes.stream()
+				.sorted(Comparator.naturalOrder())
+				.collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<Integer> stageFinishPoints = Stage.SPRINTER_POINTS.get(stageType);
+		int[] ridersPoints = elapsedTimes.stream()
+			.mapToInt(elapsedTime -> {
+				int riderFinishingPlace = rankedElapsedTimes.indexOf(elapsedTime);
+				return riderFinishingPlace < stageFinishPoints.size() ?
+						stageFinishPoints.get(riderFinishingPlace) :
+						0;
+			})
+			.toArray();
+		if (stage.isTimeTrial()) return ridersPoints;
+		Checkpoint[] checkpoints = stage.getChildren().toArray(Checkpoint[]::new);
+		ArrayList<Checkpoint> sprints = Arrays.stream(checkpoints)
+				.filter(checkpoint -> !(checkpoint instanceof Climb))
+				.collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<ArrayList<LocalDateTime>> sprintsTimes = rankedRiders.stream()
+				.map(rider -> {
+					LocalDateTime[] times = results.get(rider);
+					ArrayList<LocalDateTime> relevantTimes = new ArrayList<>();
+					for (Checkpoint sprint : sprints) relevantTimes.add(times[sprints.indexOf(sprint) + 1]);
+					return relevantTimes;
+				})
+				.collect(Collectors.toCollection(ArrayList::new));
+		for (int i = 0; i < sprints.size(); i++) {
+			int finalI = i;
+			ArrayList<LocalDateTime> sprintTimes = sprintsTimes.stream()
+					.map(times -> times.get(finalI))
+					.collect(Collectors.toCollection(ArrayList::new));
+			ArrayList<LocalDateTime> sprintRankedTimes = sprintTimes.stream()
+					.sorted(Comparator.naturalOrder())
+					.collect(Collectors.toCollection(ArrayList::new));
+			int[] sprintPoints = sprintTimes.stream()
+					.mapToInt(sprintTime -> {
+						int riderFinishingPlace = sprintRankedTimes.indexOf(sprintTime);
+						return riderFinishingPlace < Checkpoint.INTERMEDIATE_SPRINT_POINTS.length ?
+								Checkpoint.INTERMEDIATE_SPRINT_POINTS[riderFinishingPlace] :
+								0;
+					})
+					.toArray();
+			for (int i1 = 0; i1 < ridersPoints.length; i1++) {
+				ridersPoints[i1] = ridersPoints[i1] + sprintPoints[i1];
 			}
 		}
-		ArrayList<AbstractMap.SimpleEntry<Rider, Pair<ArrayList<LocalDateTime>, Integer>>> riderMaps = new ArrayList<>();
-        for (int rankedRiderId : rankedRiderIds) {
-            Rider rider = getEntity(rankedRiderId, narrow(teams, Team.class), Rider.class);
-            LocalDateTime[] times = results.get(rider);
-            LocalDateTime riderEnd = times[times.length - 1];
-			Duration elapsedTime;
-			if (stage.getType() == StageType.TT) elapsedTime = stage.ttTimeElapsed(times[0], riderEnd);
-			else elapsedTime = stage.timeElapsed(riderEnd);
-			ArrayList<LocalDateTime> dateTimes = new ArrayList<>();
-			dateTimes.add(LocalDateTime.of(stage.start.toLocalDate(), toLocalTime(elapsedTime)));
-			for (AbstractMap.SimpleEntry<Checkpoint, Integer> sprint : sprints) {
-				int sprintIndex = sprint.getValue();
-				LocalDateTime end = times[sprintIndex];
-				dateTimes.add(end);
-			}
-			riderMaps.add(new AbstractMap.SimpleEntry<>(rider, new Pair<>(dateTimes, 0)));
-        }
-		ArrayList<LocalDateTime> rankedElapsedTimes = (ArrayList<LocalDateTime>) List.of(riderMaps.stream()
-				.map(entry -> entry.getValue().getOne().getFirst())
-				.sorted(Comparator.reverseOrder())
-				.toArray(LocalDateTime[]::new));
-		ArrayList<ArrayList<Duration>> sprintsRankedDurations = new ArrayList<>();
-		for (AbstractMap.SimpleEntry<Rider, Pair<ArrayList<LocalDateTime>, Integer>> riderMap : riderMaps) {
-			ArrayList<LocalDateTime> times = riderMap.getValue().getOne();
-			if (times.size() > 1) {
-				for (int i = 1; i < sprints.size() + 1; i++) {
-					final int finalI = i;
-					sprintsRankedDurations.add((ArrayList<Duration>) List.of(riderMaps
-							.stream()
-							.map(entry -> {
-								LocalDateTime sprintEnd = entry.getValue().getOne().get(finalI);
-								return Duration.between(stage.start, sprintEnd);
-							})
-							.sorted(Comparator.naturalOrder())
-							.toArray(Duration[]::new)));
-				}
-			}
-		}
-        for (AbstractMap.SimpleEntry<Rider, Pair<ArrayList<LocalDateTime>, Integer>> riderMap : riderMaps) {
-			Pair<ArrayList<LocalDateTime>, Integer> timesPoints = riderMap.getValue();
-            ArrayList<LocalDateTime> times = timesPoints.getOne();
-            LocalDateTime elapsedTime = times.getFirst();
-            int finishingPosition = rankedElapsedTimes.indexOf(elapsedTime);
-            if (finishingPosition < 15) {
-				timesPoints.setTwo(Stage.SPRINTER_POINTS.get(stage.getType()).get(finishingPosition));
-            }
-            if (times.size() > 1) {
-				for (int i = 0; i < sprints.size(); i++) {
-					LocalDateTime sprintElapsedTime = riderMap.getValue().getOne().get(i + 1);
-					ArrayList<Duration> sprintRankedDurations = sprintsRankedDurations.get(i);
-					int sprintFinishingPosition = sprintRankedDurations.indexOf(sprintElapsedTime);
-					if (sprintFinishingPosition < 15) {
-						Integer currentPoints = timesPoints.getTwo();
-						timesPoints.setTwo(currentPoints +
-								Checkpoint.INTERMEDIATE_SPRINT_POINTS[sprintFinishingPosition]);
-					}
-				}
-			}
-        }
-		return riderMaps.stream()
-				.map(entry -> new Pair<>(entry.getValue().getOne().getFirst(), entry.getValue().getTwo()))
-				.sorted(Comparator.comparing((Pair<LocalDateTime, Integer> pair) -> pair.getOne()).reversed())
-				.mapToInt(Pair::getTwo)
-				.toArray();
+		return ridersPoints;
 	}
 
 	@Override

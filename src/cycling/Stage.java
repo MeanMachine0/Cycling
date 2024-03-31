@@ -58,10 +58,15 @@ public class Stage extends Entity implements HasChildren {
         if (results.containsKey(rider)) throw new DuplicatedResultException();
         results.put(rider, criticalTimes);
     }
+    public void addCheckpoint(Checkpoint checkpoint) {
+        checkpoints.add(checkpoint);
+        checkpoints.sort(Comparator.comparingDouble(Checkpoint::getLocation));
+    }
     public Duration timeElapsed(LocalDateTime riderEnd) {
         return Duration.between(start, riderEnd);
     }
     public Duration ttTimeElapsed(LocalDateTime riderStart, LocalDateTime riderEnd) {
         return Duration.between(riderStart, riderEnd);
     }
+    public boolean isTimeTrial() { return type.equals(StageType.TT); }
 }

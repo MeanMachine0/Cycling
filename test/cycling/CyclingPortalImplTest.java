@@ -463,7 +463,7 @@ class CyclingPortalImplTest {
         int myId = portal.createRider(teamId, "Marcus", 2004);
         int dadId = portal.createRider(parentsId, "Tim", 1970);
         int mumId = portal.createRider(parentsId, "Annie", 1973);
-        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(237), start.plusMinutes(400), start.plusMinutes(557), start.plusMinutes(600).plusSeconds(1) });
+        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(237), start.plusMinutes(400), start.plusMinutes(557), start.plusMinutes(600).plusSeconds(2) });
         LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(236), start.plusMinutes(415), start.plusMinutes(556), start.plusMinutes(600).plusSeconds(2) });
         LocalTime[] stormyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(235), start.plusMinutes(385), start.plusMinutes(555), start.plusMinutes(600).minusSeconds(6) });
         LocalTime[] dadCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(234), start.plusMinutes(400), start.plusMinutes(554), start.plusMinutes(600).minusSeconds(4) });
@@ -482,7 +482,7 @@ class CyclingPortalImplTest {
         // act
         int[] rankedPoints = portal.getRidersPointsInStage(stageId);
         // assert
-        int[] expectedRankedPoints = { 10+10+30, 11+11+25, 13+13+22, 15+15+19, 17+20+17, 8+8+15, 9+9+13, 20+20+11 };
+        int[] expectedRankedPoints = { 10+10+30, 11+11+25, 13+13+22, 15+15+19, 17+20+17, 8+8+15, 9+9+15, 20+20+11 };
         assert Arrays.equals(expectedRankedPoints, rankedPoints);
     }
     @org.junit.jupiter.api.Test

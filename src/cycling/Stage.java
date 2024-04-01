@@ -2,14 +2,13 @@ package cycling;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 
 public class Stage extends Entity implements HasChildren {
     private final String description;
     private final double length;
     protected final LocalDateTime start;
-    private final StageType type;
+    protected final StageType type;
     private String state;
     private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
     private final Map<Rider, LocalDateTime[]> results = new HashMap<>();

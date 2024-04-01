@@ -299,12 +299,12 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public int[] getRidersPointsInStage(int stageId) throws IDNotRecognisedException {
 		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
 		Map<Rider, LocalDateTime[]> results = stage.getResults();
+		if (results.isEmpty()) return new int[0];
 		int[] rankedRiderIds = getRidersRankInStage(stageId);
 		ArrayList<Rider> rankedRiders = new ArrayList<>();
 		for (int rankedRiderId : rankedRiderIds) {
 			rankedRiders.add(getEntity(rankedRiderId, narrow(teams, Team.class), Rider.class));
 		}
-		StageType stageType = stage.getType();
 		ArrayList<Duration> elapsedTimes = rankedRiders.stream()
 				.map(rider -> {
 					LocalDateTime[] times = results.get(rider);
@@ -316,8 +316,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		ArrayList<Duration> rankedElapsedTimes = elapsedTimes.stream()
 				.sorted(Comparator.naturalOrder())
 				.collect(Collectors.toCollection(ArrayList::new));
-		ArrayList<Integer> stageFinishPoints = Stage.SPRINTER_POINTS.get(stageType);
-		int[] ridersPoints = elapsedTimes.stream()
+		ArrayList<Integer> stageFinishPoints = Stage.SPRINTER_POINTS.get(stage.type);
+		int[] ridersSprinterPoints = elapsedTimes.stream()
 			.mapToInt(elapsedTime -> {
 				int riderFinishingPlace = rankedElapsedTimes.indexOf(elapsedTime);
 				return riderFinishingPlace < stageFinishPoints.size() ?
@@ -325,7 +325,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 						0;
 			})
 			.toArray();
-		if (stage.isTimeTrial()) return ridersPoints;
+		if (stage.isTimeTrial()) return ridersSprinterPoints;
 		ArrayList<Checkpoint> checkpoints = stage.getChildren();
 		ArrayList<Checkpoint> sprints = checkpoints.stream()
 				.filter(checkpoint -> !(checkpoint instanceof Climb))
@@ -339,7 +339,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 				})
 				.collect(Collectors.toCollection(ArrayList::new));
 		for (int i = 0; i < sprints.size(); i++) {
-			int finalI = i;
+			final int finalI = i;
 			ArrayList<LocalDateTime> sprintTimes = sprintsTimes.stream()
 					.map(times -> times.get(finalI))
 					.collect(Collectors.toCollection(ArrayList::new));
@@ -354,17 +354,61 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 								0;
 					})
 					.toArray();
-			for (int i1 = 0; i1 < ridersPoints.length; i1++) {
-				ridersPoints[i1] = ridersPoints[i1] + sprintPoints[i1];
+			for (int i1 = 0; i1 < ridersSprinterPoints.length; i1++) {
+				ridersSprinterPoints[i1] = ridersSprinterPoints[i1] + sprintPoints[i1];
 			}
 		}
-		return ridersPoints;
+		return ridersSprinterPoints;
 	}
 
 	@Override
 	public int[] getRidersMountainPointsInStage(int stageId) throws IDNotRecognisedException {
-		// TODO Auto-generated method stub
-		return null;
+		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Map<Rider, LocalDateTime[]> results = stage.getResults();
+		if (results.isEmpty()) return new int[0];
+		int[] ridersMountainPoints;
+		int[] rankedRiderIds = getRidersRankInStage(stageId);
+		ridersMountainPoints = new int[rankedRiderIds.length];
+		Arrays.fill(ridersMountainPoints, 0);
+		if (stage.isTimeTrial()) return ridersMountainPoints;
+		ArrayList<Rider> rankedRiders = new ArrayList<>();
+		for (int rankedRiderId : rankedRiderIds) {
+			rankedRiders.add(getEntity(rankedRiderId, narrow(teams, Team.class), Rider.class));
+		}
+		ArrayList<Checkpoint> checkpoints = stage.getChildren();
+		ArrayList<Checkpoint> climbs = checkpoints.stream()
+				.filter(checkpoint -> checkpoint instanceof Climb)
+				.collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<ArrayList<LocalDateTime>> climbsTimes = rankedRiders.stream()
+				.map(rider -> {
+					LocalDateTime[] times = results.get(rider);
+					ArrayList<LocalDateTime> relevantTimes = new ArrayList<>();
+					for (Checkpoint climb : climbs) relevantTimes.add(times[checkpoints.indexOf(climb) + 1]);
+					return relevantTimes;
+				})
+				.collect(Collectors.toCollection(ArrayList::new));
+		for (int i = 0; i < climbs.size(); i++) {
+			final int finalI = i;
+			ArrayList<LocalDateTime> climbTimes = climbsTimes.stream()
+					.map(times -> times.get(finalI))
+					.collect(Collectors.toCollection(ArrayList::new));
+			ArrayList<LocalDateTime> climbRankedTimes = climbTimes.stream()
+					.sorted(Comparator.naturalOrder())
+					.collect(Collectors.toCollection(ArrayList::new));
+			ArrayList<Integer> climbPoints = Climb.MOUNTAIN_POINTS.get(climbs.get(finalI).type);
+			int[] pointsFromClimb = climbTimes.stream()
+					.mapToInt(sprintTime -> {
+						int riderFinishingPlace = climbRankedTimes.indexOf(sprintTime);
+						return riderFinishingPlace < climbPoints.size() ?
+								climbPoints.get(riderFinishingPlace) :
+								0;
+					})
+					.toArray();
+			for (int i1 = 0; i1 < ridersMountainPoints.length; i1++) {
+				ridersMountainPoints[i1] = ridersMountainPoints[i1] + pointsFromClimb[i1];
+			}
+		}
+		return ridersMountainPoints;
 	}
 
 	@Override
@@ -404,17 +448,6 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		}
 		throw new IDNotRecognisedException();
 	}
-	private LocalTime timeElapsed(LocalTime start, LocalTime end) {
-		Duration elapsedTime;
-		if (start.isBefore(end)) {
-			elapsedTime = Duration.between(start, end);
-		} else {
-			elapsedTime = Duration.between(start, LocalTime.MAX)
-					.plus(Duration.ofNanos(1))
-					.plus(Duration.between(LocalTime.MIDNIGHT, end));
-		}
-		return toLocalTime(elapsedTime);
-	}
 	private void removeRiderResults(Rider rider) {
 		for (Entity race : races) {
 			ArrayList<Stage> stages = ((Race) race).getChildren();
@@ -446,13 +479,5 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		int seconds = duration.toSecondsPart();
 		int nanoseconds = duration.toNanosPart();
 		return LocalTime.of(hours, minutes, seconds, nanoseconds);
-	}
-	private Duration toDuration(LocalTime time) {
-		Duration duration = Duration.ZERO;
-		return duration
-				.plusHours(time.getHour())
-				.plusMinutes(time.getMinute())
-				.plusSeconds(time.getSecond())
-				.plusNanos(time.getNano());
 	}
 }

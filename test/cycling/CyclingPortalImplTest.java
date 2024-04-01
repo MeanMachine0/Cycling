@@ -3,7 +3,9 @@ package cycling;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -388,7 +390,7 @@ class CyclingPortalImplTest {
         int[] riderIds = portal.getRidersRankInStage(stageId);
         // assert
         int[] expectedRiderIds = { stormyId, dadId, mumId, danId, joelId, bouncerId, fluffyId, myId };
-        assertArrayEquals(riderIds, expectedRiderIds);
+        assertArrayEquals(expectedRiderIds, riderIds);
     }
     @org.junit.jupiter.api.Test
     void getRankedAdjustedElapsedTimesInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
@@ -455,14 +457,14 @@ class CyclingPortalImplTest {
         int teamId = portal.createTeam("Apes", "Zoo escapees");
         int parentsId = portal.createTeam("Great_Apes", "The founding zoo escapees");
         int petsId = portal.createTeam("Humans", "Zookeepers");
-        int bouncerId = portal.createRider(petsId, "Bouncer", 1970);
-        int fluffyId = portal.createRider(petsId, "Fluffy", 1970);
-        int stormyId = portal.createRider(petsId, "Stormy", 1970);
-        int danId = portal.createRider(teamId, "Daniel", 1999);
-        int joelId = portal.createRider(teamId, "Joel", 2001);
-        int myId = portal.createRider(teamId, "Marcus", 2004);
-        int dadId = portal.createRider(parentsId, "Tim", 1970);
-        int mumId = portal.createRider(parentsId, "Annie", 1973);
+        Pair<Integer, Integer> bouncer = new Pair<>(portal.createRider(petsId, "Bouncer", 1970), 0);
+        Pair<Integer, Integer> fluffy= new Pair<>(portal.createRider(petsId, "Fluffy", 1970), 0);
+        Pair<Integer, Integer> stormy = new Pair<>(portal.createRider(petsId, "Stormy", 1970), 0);
+        Pair<Integer, Integer> dan = new Pair<>(portal.createRider(teamId, "Daniel", 1999), 0);
+        Pair<Integer, Integer> joel = new Pair<>(portal.createRider(teamId, "Joel", 2001), 0);
+        Pair<Integer, Integer> me = new Pair<>(portal.createRider(teamId, "Marcus", 2004), 0);
+        Pair<Integer, Integer> dad = new Pair<>(portal.createRider(parentsId, "Tim", 1970), 0);
+        Pair<Integer, Integer> mum = new Pair<>(portal.createRider(parentsId, "Annie", 1973), 0);
         LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(237), start.plusMinutes(400), start.plusMinutes(557), start.plusMinutes(600).plusSeconds(2) });
         LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(236), start.plusMinutes(415), start.plusMinutes(556), start.plusMinutes(600).plusSeconds(2) });
         LocalTime[] stormyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(235), start.plusMinutes(385), start.plusMinutes(555), start.plusMinutes(600).minusSeconds(6) });
@@ -471,18 +473,29 @@ class CyclingPortalImplTest {
         LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(232), start.plusMinutes(400), start.plusMinutes(552), start.plusMinutes(600).minusSeconds(1) });
         LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(231), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600) });
         LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(229), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600).plusSeconds(3) });
-        portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
-        portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
-        portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
-        portal.registerRiderResultsInStage(stageId, dadId, dadCriticalTimes);
-        portal.registerRiderResultsInStage(stageId, joelId, joelCriticalTimes);
-        portal.registerRiderResultsInStage(stageId, stormyId, stormyCriticalTimes);
-        portal.registerRiderResultsInStage(stageId, myId, myCriticalTimes);
-        portal.registerRiderResultsInStage(stageId, mumId, mumCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, bouncer.getOne(), bouncerCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, fluffy.getOne(), fluffyCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, dan.getOne(), danCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, dad.getOne(), dadCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, joel.getOne(), joelCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, stormy.getOne(), stormyCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, me.getOne(), myCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, mum.getOne(), mumCriticalTimes);
         // act
         int[] rankedPoints = portal.getRidersPointsInStage(stageId);
         // assert
-        int[] expectedRankedPoints = { 10+10+30, 11+11+25, 13+13+22, 15+15+19, 17+20+17, 8+8+15, 9+9+15, 20+20+11 };
+        bouncer.setTwo(8+8+15);
+        fluffy.setTwo(9+9+15);
+        stormy.setTwo(10+10+30);
+        dad.setTwo(11+11+25);
+        mum.setTwo(13+13+22);
+        dan.setTwo(15+15+19);
+        joel.setTwo(17+20+17);
+        me.setTwo(20+20+11);
+        ArrayList<Pair<Integer, Integer>> riders = new ArrayList<>(List.of(bouncer, fluffy, stormy, dan, joel, me, dad, mum));
+        int[] rankedRiderIds = portal.getRidersRankInStage(stageId);
+        int[] expectedRankedPoints = Arrays.stream(rankedRiderIds)
+                .map(riderId -> riders.stream().filter(pair -> riderId == pair.getOne()).findFirst().orElseThrow().getTwo()).toArray();
         assert Arrays.equals(expectedRankedPoints, rankedPoints);
     }
     @org.junit.jupiter.api.Test
@@ -520,6 +533,60 @@ class CyclingPortalImplTest {
         int[] rankedPoints = portal.getRidersPointsInStage(stageId);
         // assert
         int[] expectedRankedPoints = { 20, 17, 15, 13, 11, 11, 9 };
+        assertArrayEquals(expectedRankedPoints, rankedPoints);
+    }
+    @org.junit.jupiter.api.Test
+    void getRidersMountainPointsInStage() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException {
+        // arrange
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        int stageId = portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
+        portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C4, 0.8, 5.0);
+        portal.addCategorizedClimbToStage(stageId, 4.0, CheckpointType.C2, 0.2, 1.0);
+        portal.addCategorizedClimbToStage(stageId, 1.25, CheckpointType.HC, 1.2, 6.0);
+        int teamId = portal.createTeam("Apes", "Zoo escapees");
+        int parentsId = portal.createTeam("Great_Apes", "The founding zoo escapees");
+        int petsId = portal.createTeam("Humans", "Zookeepers");
+        Pair<Integer, Integer> bouncer = new Pair<>(portal.createRider(petsId, "Bouncer", 1970), 0);
+        Pair<Integer, Integer> fluffy= new Pair<>(portal.createRider(petsId, "Fluffy", 1970), 0);
+        Pair<Integer, Integer> stormy = new Pair<>(portal.createRider(petsId, "Stormy", 1970), 0);
+        Pair<Integer, Integer> dan = new Pair<>(portal.createRider(teamId, "Daniel", 1999), 0);
+        Pair<Integer, Integer> joel = new Pair<>(portal.createRider(teamId, "Joel", 2001), 0);
+        Pair<Integer, Integer> me = new Pair<>(portal.createRider(teamId, "Marcus", 2004), 0);
+        Pair<Integer, Integer> dad = new Pair<>(portal.createRider(parentsId, "Tim", 1970), 0);
+        Pair<Integer, Integer> mum = new Pair<>(portal.createRider(parentsId, "Annie", 1973), 0);
+        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(237), start.plusMinutes(400), start.plusMinutes(557), start.plusMinutes(600).plusSeconds(2) });
+        LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(236), start.plusMinutes(415), start.plusMinutes(556), start.plusMinutes(600).plusSeconds(2) });
+        LocalTime[] stormyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(235), start.plusMinutes(385), start.plusMinutes(555), start.plusMinutes(600).minusSeconds(6) });
+        LocalTime[] dadCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(234), start.plusMinutes(400), start.plusMinutes(554), start.plusMinutes(600).minusSeconds(4) });
+        LocalTime[] mumCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(233), start.plusMinutes(400), start.plusMinutes(553), start.plusMinutes(600).minusSeconds(2) });
+        LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(232), start.plusMinutes(400), start.plusMinutes(552), start.plusMinutes(600).minusSeconds(1) });
+        LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(231), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600) });
+        LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(229), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600).plusSeconds(3) });
+        portal.registerRiderResultsInStage(stageId, bouncer.getOne(), bouncerCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, fluffy.getOne(), fluffyCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, dan.getOne(), danCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, dad.getOne(), dadCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, joel.getOne(), joelCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, stormy.getOne(), stormyCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, me.getOne(), myCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, mum.getOne(), mumCriticalTimes);
+        // act
+        int[] rankedPoints = portal.getRidersMountainPointsInStage(stageId);
+        // assert
+        bouncer.setTwo(2);
+        fluffy.setTwo(4);
+        stormy.setTwo(6+1);
+        dad.setTwo(8);
+        mum.setTwo(10+1);
+        dan.setTwo(12+2);
+        joel.setTwo(15+5);
+        me.setTwo(20+5);
+        ArrayList<Pair<Integer, Integer>> riders = new ArrayList<>(List.of(bouncer, fluffy, stormy, dan, joel, me, dad, mum));
+        int[] rankedRiderIds = portal.getRidersRankInStage(stageId);
+        int[] expectedRankedPoints = Arrays.stream(rankedRiderIds)
+                .map(riderId -> riders.stream().filter(pair -> riderId == pair.getOne()).findFirst().orElseThrow().getTwo()).toArray();
         assert Arrays.equals(expectedRankedPoints, rankedPoints);
     }
     @org.junit.jupiter.api.Test

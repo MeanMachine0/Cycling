@@ -1,7 +1,5 @@
 package cycling;
 
-import java.util.ArrayList;
-
 public class Checkpoint extends Entity {
     protected final CheckpointType type;
     protected final double location;

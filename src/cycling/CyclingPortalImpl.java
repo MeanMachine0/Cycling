@@ -170,6 +170,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int createRider(int teamID, String name, int yearOfBirth)
 			throws IDNotRecognisedException, IllegalArgumentException {
+		if (name == null || name.isEmpty() || yearOfBirth < 1900) throw new IllegalArgumentException();
 		Team team = (Team) getEntity(teamID, teams).orElseThrow(IDNotRecognisedException::new);
 		ArrayList<Rider> riders = team.getChildren();
 		Rider rider = new Rider(nextId++, name, yearOfBirth);
@@ -457,17 +458,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		}
 	}
 	private void validateName(ArrayList<Entity> entities, String name) throws InvalidNameException, IllegalNameException {
-		if (name == null || name.isEmpty() || name.length() > 30) {
-			throw new InvalidNameException();
-		}
+		if (name == null || name.isEmpty() || name.length() > 30) throw new InvalidNameException();
 		for (char c : name.toCharArray()) {
 			if (Character.isWhitespace(c)) {
 				throw new InvalidNameException();
 			}
 		}
-		for (Entity entity : entities) {
-			if (entity.getName().equals(name)) throw new IllegalNameException();
-		}
+		for (Entity entity : entities) if (entity.getName().equals(name)) throw new IllegalNameException();
 	}
 	private void validateStageState(Stage stage) throws InvalidStageStateException {
 		String currentState = stage.getState();

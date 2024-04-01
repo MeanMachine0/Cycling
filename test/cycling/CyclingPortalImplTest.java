@@ -16,8 +16,12 @@ class CyclingPortalImplTest {
         portal = new CyclingPortalImpl();
     }
 
-    @org.junit.jupiter.api.AfterEach
-    void tearDown() {
+    @org.junit.jupiter.api.Test
+    void getRaceIds_empty() {
+        // act
+        int[] raceIds = portal.getRaceIds();
+        // assert
+        assertArrayEquals(new int[0], raceIds);
     }
     @org.junit.jupiter.api.Test
     void createTeam_oneValidTeam() throws InvalidNameException, IllegalNameException {

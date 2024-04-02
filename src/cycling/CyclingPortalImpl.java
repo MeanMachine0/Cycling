@@ -432,6 +432,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void loadCyclingPortal(String filename) throws IOException, ClassNotFoundException {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
 		nextId = in.readInt();

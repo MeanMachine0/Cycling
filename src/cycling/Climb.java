@@ -5,9 +5,10 @@ import java.util.EnumMap;
 import java.util.List;
 
 public class Climb extends Checkpoint {
-    private final double averageGradient;
-    private final double length;
-    public static final EnumMap<CheckpointType, ArrayList<Integer>> MOUNTAIN_POINTS = new EnumMap<>(CheckpointType.class);
+    protected final double averageGradient;
+    protected final double length;
+    public static final EnumMap<CheckpointType, ArrayList<Integer>> MOUNTAIN_POINTS =
+            new EnumMap<>(CheckpointType.class);
 
     static {
         MOUNTAIN_POINTS.put(CheckpointType.C4, new ArrayList<>(List.of(1)));
@@ -26,7 +27,4 @@ public class Climb extends Checkpoint {
         return "Checkpoint(Climb)[id="+id+", type="+type+", location="+location+
                 ", averageGradient="+averageGradient+", length="+length+"]";
     }
-
-    public double getAverageGradient() { return averageGradient; }
-    public double getLength() { return length; }
 }

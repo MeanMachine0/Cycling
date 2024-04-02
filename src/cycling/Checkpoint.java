@@ -9,6 +9,7 @@ public class Checkpoint extends Entity {
         this.type = type;
         this.location = location;
     }
+    @Override
     public String toString() { return "Checkpoint[id="+id+", type="+type+", location="+location+"]"; }
 
     public CheckpointType getType() { return type; }

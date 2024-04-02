@@ -1,5 +1,7 @@
 package cycling;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -10,10 +12,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CyclingPortalImplTest {
-    MiniCyclingPortal portal;
-    @org.junit.jupiter.api.BeforeEach
-    void setUp() {
-        portal = new CyclingPortalImpl();
+    final String filename = "miniCyclingPortal.ser";
+    MiniCyclingPortal portal = new CyclingPortalImpl();
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        File file = new File(filename);
+        if (file.exists() && file.delete()) System.out.println(filename + " deleted.");
+        portal.eraseCyclingPortal();
     }
 
     @org.junit.jupiter.api.Test
@@ -220,6 +225,7 @@ class CyclingPortalImplTest {
         portal.createRider(teamId, "Joel", 2001);
         int myId = portal.createRider(teamId, "Marcus", 2004);
         LocalTime[] criticalTimes = { start.toLocalTime(), start.plusMinutes(50).toLocalTime(), start.plusMinutes(62).toLocalTime(), start.plusMinutes(70).toLocalTime()};
+        portal.concludeStagePreparation(stageId);
         // act
         portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
         // assert
@@ -238,6 +244,7 @@ class CyclingPortalImplTest {
         portal.createRider(teamId, "Daniel", 1999);
         portal.createRider(teamId, "Joel", 2001);
         int myId = portal.createRider(teamId, "Marcus", 2004);
+        portal.concludeStagePreparation(stageId);
         LocalTime[] criticalTimes = toLocalTimeArray(new LocalDateTime[]{start, start.plusMinutes(50), start.plusMinutes(62), start.plusMinutes(70)});
         portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
         // act
@@ -258,6 +265,7 @@ class CyclingPortalImplTest {
         int myId = portal.createRider(teamId, "Marcus", 2004);
         LocalTime now = LocalTime.now();
         LocalTime[] criticalTimes = { now, now.plusMinutes(50), now.plusMinutes(62), now.plusMinutes(70)};
+        portal.concludeStagePreparation(stageId);
         portal.registerRiderResultsInStage(stageId, myId, criticalTimes);
         // act
         portal.deleteRiderResultsInStage(stageId, myId);
@@ -300,6 +308,7 @@ class CyclingPortalImplTest {
         LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(3) });
         Duration myDuration = Duration.ofMinutes(555).plusSeconds(3);
         LocalTime myElapsedTime = LocalTime.of(myDuration.toHoursPart(), myDuration.toMinutesPart(), myDuration.toSecondsPart(), myDuration.toNanosPart());
+        portal.concludeStagePreparation(stageId);
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
@@ -340,6 +349,7 @@ class CyclingPortalImplTest {
         LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).plusSeconds(3) });
         Duration myDuration = Duration.ofMinutes(555).plusSeconds(3);
         LocalTime myElapsedTime = LocalTime.of(myDuration.toHoursPart(), myDuration.toMinutesPart(), myDuration.toSecondsPart(), myDuration.toNanosPart());
+        portal.concludeStagePreparation(stageId);
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
@@ -382,6 +392,7 @@ class CyclingPortalImplTest {
         LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(1) });
         LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555) });
         LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(3) });
+        portal.concludeStagePreparation(stageId);
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
@@ -424,6 +435,7 @@ class CyclingPortalImplTest {
         LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).minusSeconds(1) });
         LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555) });
         LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(230), start.plusMinutes(400), start.plusMinutes(555).plusSeconds(3) });
+        portal.concludeStagePreparation(stageId);
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
@@ -477,6 +489,7 @@ class CyclingPortalImplTest {
         LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(232), start.plusMinutes(400), start.plusMinutes(552), start.plusMinutes(600).minusSeconds(1) });
         LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(231), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600) });
         LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(229), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600).plusSeconds(3) });
+        portal.concludeStagePreparation(stageId);
         portal.registerRiderResultsInStage(stageId, bouncer.getOne(), bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffy.getOne(), fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, dan.getOne(), danCriticalTimes);
@@ -500,7 +513,7 @@ class CyclingPortalImplTest {
         int[] rankedRiderIds = portal.getRidersRankInStage(stageId);
         int[] expectedRankedPoints = Arrays.stream(rankedRiderIds)
                 .map(riderId -> riders.stream().filter(pair -> riderId == pair.getOne()).findFirst().orElseThrow().getTwo()).toArray();
-        assert Arrays.equals(expectedRankedPoints, rankedPoints);
+        assertArrayEquals(expectedRankedPoints, rankedPoints);
     }
     @org.junit.jupiter.api.Test
     void getRidersPointsInStage_TT() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, DuplicatedResultException, InvalidCheckpointTimesException {
@@ -527,6 +540,7 @@ class CyclingPortalImplTest {
         LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).minusSeconds(1) });
         LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555) });
         LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(555).plusSeconds(3) });
+        portal.concludeStagePreparation(stageId);
         portal.registerRiderResultsInStage(stageId, bouncerId, bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffyId, fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, danId, danCriticalTimes);
@@ -568,6 +582,7 @@ class CyclingPortalImplTest {
         LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(232), start.plusMinutes(400), start.plusMinutes(552), start.plusMinutes(600).minusSeconds(1) });
         LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(231), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600) });
         LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(229), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600).plusSeconds(3) });
+        portal.concludeStagePreparation(stageId);
         portal.registerRiderResultsInStage(stageId, bouncer.getOne(), bouncerCriticalTimes);
         portal.registerRiderResultsInStage(stageId, fluffy.getOne(), fluffyCriticalTimes);
         portal.registerRiderResultsInStage(stageId, dan.getOne(), danCriticalTimes);
@@ -591,7 +606,7 @@ class CyclingPortalImplTest {
         int[] rankedRiderIds = portal.getRidersRankInStage(stageId);
         int[] expectedRankedPoints = Arrays.stream(rankedRiderIds)
                 .map(riderId -> riders.stream().filter(pair -> riderId == pair.getOne()).findFirst().orElseThrow().getTwo()).toArray();
-        assert Arrays.equals(expectedRankedPoints, rankedPoints);
+        assertArrayEquals(expectedRankedPoints, rankedPoints);
     }
     @org.junit.jupiter.api.Test
     void concludeStagePreparation() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException {
@@ -607,6 +622,64 @@ class CyclingPortalImplTest {
         portal.concludeStagePreparation(spoonStageId);
         // assert
         assertThrows(InvalidStageStateException.class, () -> portal.concludeStagePreparation(spoonStageId));
+    }
+    @org.junit.jupiter.api.Test
+    void eraseCyclingPortal() throws InvalidNameException, IllegalNameException {
+        // arrange
+        portal.createTeam("Apes", "Zoo escapees");
+        portal.createRace("Egg&Spoon", "...on a bike");
+        // act
+        portal.eraseCyclingPortal();
+        portal.createTeam("Apes", "Zoo escapees");
+        portal.createRace("Egg&Spoon", "...on a bike");
+        // assert
+        assertArrayEquals(new int[] { 1 }, portal.getTeams());
+        assertArrayEquals(new int[] { 2 }, portal.getRaceIds());
+    }
+    @org.junit.jupiter.api.Test
+    void saveEraseLoadCyclingPortal() throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException, IOException, ClassNotFoundException {
+        // arrange
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
+        int raceId = portal.createRace("Egg&Spoon", "...on a bike");
+        int stageId = portal.addStageToRace(raceId, "Egg",
+                "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
+        portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C4, 0.8, 5.0);
+        portal.addCategorizedClimbToStage(stageId, 4.0, CheckpointType.C2, 0.2, 1.0);
+        portal.addCategorizedClimbToStage(stageId, 1.25, CheckpointType.HC, 1.2, 6.0);
+        int teamId = portal.createTeam("Apes", "Zoo escapees");
+        int parentsId = portal.createTeam("Great_Apes", "The founding zoo escapees");
+        int petsId = portal.createTeam("Humans", "Zookeepers");
+        Pair<Integer, Integer> bouncer = new Pair<>(portal.createRider(petsId, "Bouncer", 1970), 0);
+        Pair<Integer, Integer> fluffy= new Pair<>(portal.createRider(petsId, "Fluffy", 1970), 0);
+        Pair<Integer, Integer> stormy = new Pair<>(portal.createRider(petsId, "Stormy", 1970), 0);
+        Pair<Integer, Integer> dan = new Pair<>(portal.createRider(teamId, "Daniel", 1999), 0);
+        Pair<Integer, Integer> joel = new Pair<>(portal.createRider(teamId, "Joel", 2001), 0);
+        Pair<Integer, Integer> me = new Pair<>(portal.createRider(teamId, "Marcus", 2004), 0);
+        Pair<Integer, Integer> dad = new Pair<>(portal.createRider(parentsId, "Tim", 1970), 0);
+        Pair<Integer, Integer> mum = new Pair<>(portal.createRider(parentsId, "Annie", 1973), 0);
+        LocalTime[] bouncerCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(237), start.plusMinutes(400), start.plusMinutes(557), start.plusMinutes(600).plusSeconds(2) });
+        LocalTime[] fluffyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(236), start.plusMinutes(415), start.plusMinutes(556), start.plusMinutes(600).plusSeconds(2) });
+        LocalTime[] stormyCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(235), start.plusMinutes(385), start.plusMinutes(555), start.plusMinutes(600).minusSeconds(6) });
+        LocalTime[] dadCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(234), start.plusMinutes(400), start.plusMinutes(554), start.plusMinutes(600).minusSeconds(4) });
+        LocalTime[] mumCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(233), start.plusMinutes(400), start.plusMinutes(553), start.plusMinutes(600).minusSeconds(2) });
+        LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(232), start.plusMinutes(400), start.plusMinutes(552), start.plusMinutes(600).minusSeconds(1) });
+        LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(231), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600) });
+        LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[] { start, start.plusMinutes(229), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600).plusSeconds(3) });
+        portal.concludeStagePreparation(stageId);
+        portal.registerRiderResultsInStage(stageId, bouncer.getOne(), bouncerCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, fluffy.getOne(), fluffyCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, dan.getOne(), danCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, dad.getOne(), dadCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, joel.getOne(), joelCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, stormy.getOne(), stormyCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, me.getOne(), myCriticalTimes);
+        portal.registerRiderResultsInStage(stageId, mum.getOne(), mumCriticalTimes);
+        // act
+        portal.saveCyclingPortal(filename);
+        System.out.println(filename + " created.");
+        portal.eraseCyclingPortal();
+        portal.loadCyclingPortal(filename);
+        // assert
     }
     private static LocalTime[] toLocalTimeArray(LocalDateTime[] times) {
         return Arrays.stream(times)

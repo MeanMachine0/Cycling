@@ -8,6 +8,7 @@ public class Pair<One, Two> {
         this.one = one;
         this.two = two;
     }
+    @Override
     public String toString() {
         return "Pair["+one+", "+two+"]";
     }

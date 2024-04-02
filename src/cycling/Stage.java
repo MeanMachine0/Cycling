@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class Stage extends Entity implements HasChildren {
-    private final String description;
-    private final double length;
+    protected final String description;
+    protected final double length;
     protected final LocalDateTime start;
     protected final StageType type;
     private String state;
@@ -38,15 +38,6 @@ public class Stage extends Entity implements HasChildren {
                 "km, start="+start+", type="+type+"]";
     }
 
-    public String getDescription() {
-        return description;
-    }
-    public double getLength() {
-        return length;
-    }
-    public StageType getType() {
-        return type;
-    }
     public String getState() { return state; }
     public void setState(String state) { this.state = state; }
     @Override
@@ -68,4 +59,5 @@ public class Stage extends Entity implements HasChildren {
         return Duration.between(riderStart, riderEnd);
     }
     public boolean isTimeTrial() { return type.equals(StageType.TT); }
+    public boolean isInPreparation() { return !state.equals("waiting for results"); }
 }

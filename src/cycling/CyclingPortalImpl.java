@@ -1,6 +1,6 @@
 package cycling;
 
-import java.io.IOException;
+import java.io.*;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,17 +10,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Egg
+ * My implementation of the MiniCyclingPortal interface.
  * @author Marcus Carter
  */
 public class CyclingPortalImpl implements MiniCyclingPortal {
+	/**
+	 * Global id counter; all entities share this.
+	 */
 	private int nextId = 1;
-	private final ArrayList<Entity> teams = new ArrayList<>();
-	private final ArrayList<Entity> races = new ArrayList<>();
+	private ArrayList<Entity> teams = new ArrayList<>();
+	private ArrayList<Entity> races = new ArrayList<>();
 
 	@Override
 	public int[] getRaceIds() {
-		return races.stream().mapToInt(Entity::getId).toArray();
+		return races.stream().mapToInt(race -> race.id).toArray();
 	}
 
 	@Override
@@ -65,13 +68,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int[] getRaceStages(int raceId) throws IDNotRecognisedException {
 		Race race = (Race) getEntity(raceId, races).orElseThrow(IDNotRecognisedException::new);
-		return race.getChildren().stream().mapToInt(Stage::getId).toArray();
+		return race.getChildren().stream().mapToInt(stage -> stage.id).toArray();
 	}
 
 	@Override
 	public double getStageLength(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		return stage.getLength();
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		return stage.length;
 	}
 
 	@Override
@@ -87,9 +90,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public int addCategorizedClimbToStage(int stageId, Double location, CheckpointType type, Double averageGradient,
 			Double length) throws IDNotRecognisedException, InvalidLocationException, InvalidStageStateException,
 		InvalidStageTypeException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		validateStageState(stage);
-		if (location > stage.getLength()) throw new InvalidLocationException();
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		if (!stage.isInPreparation()) throw new InvalidStageStateException();
+		if (location > stage.length) throw new InvalidLocationException();
 		if (stage.isTimeTrial()) throw new InvalidStageTypeException();
 		Checkpoint checkpoint = new Climb(nextId++, "", type, location, averageGradient, length);
 		stage.addCheckpoint(checkpoint);
@@ -99,9 +102,9 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public int addIntermediateSprintToStage(int stageId, double location) throws IDNotRecognisedException,
 			InvalidLocationException, InvalidStageStateException, InvalidStageTypeException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		validateStageState(stage);
-		if (location > stage.getLength()) throw new InvalidLocationException();
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		if (!stage.isInPreparation()) throw new InvalidStageStateException();
+		if (location > stage.length) throw new InvalidLocationException();
 		if (stage.isTimeTrial()) throw new InvalidStageTypeException();
 		Checkpoint checkpoint = new Checkpoint(nextId++, "", CheckpointType.SPRINT, location);
 		stage.addCheckpoint(checkpoint);
@@ -111,14 +114,14 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	@Override
 	public void removeCheckpoint(int checkpointId) throws IDNotRecognisedException, InvalidStageStateException {
 		for (Entity race : races) {
-			ArrayList<Entity> stages = new ArrayList<>(((Race) race).getChildren());
-			for (Entity stage : stages) {
-				ArrayList<Checkpoint> checkpoints = ((Stage) stage).getChildren();
+			ArrayList<Stage> stages = new ArrayList<>(((Race) race).getChildren());
+			for (Stage stage : stages) {
+				ArrayList<Checkpoint> checkpoints = stage.getChildren();
 				Optional<Checkpoint> optionalCheckpoint = checkpoints.stream()
 						.filter(checkpoint -> checkpoint.id == checkpointId)
 						.findFirst();
 				if (optionalCheckpoint.isPresent()) {
-					validateStageState((Stage) stage);
+					if (!stage.isInPreparation()) throw new InvalidStageStateException();
 					checkpoints.remove(optionalCheckpoint.get());
 					return;
 				}
@@ -129,15 +132,15 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void concludeStagePreparation(int stageId) throws IDNotRecognisedException, InvalidStageStateException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		validateStageState(stage);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		if (!stage.isInPreparation()) throw new InvalidStageStateException();
 		stage.setState("waiting for results");
 	}
 
 	@Override
 	public int[] getStageCheckpoints(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		return stage.getChildren().stream().mapToInt(Checkpoint::getId).toArray();
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		return stage.getChildren().stream().mapToInt(checkpoint -> checkpoint.id).toArray();
 	}
 
 	@Override
@@ -157,14 +160,14 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getTeams() {
-        return teams.stream().mapToInt(Entity::getId).toArray();
+        return teams.stream().mapToInt(team -> team.id).toArray();
 	}
 
 	@Override
 	public int[] getTeamRiders(int teamId) throws IDNotRecognisedException {
 		Team team = (Team) getEntity(teamId, teams).orElseThrow(IDNotRecognisedException::new);
 		ArrayList<Rider> riders = team.getChildren();
-        return riders.stream().mapToInt(Rider::getId).toArray();
+        return riders.stream().mapToInt(rider -> rider.id).toArray();
 	}
 
 	@Override
@@ -180,7 +183,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void removeRider(int riderId) throws IDNotRecognisedException {
-		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
+		Rider rider = getEntity(riderId, downcast(teams, Team.class), Rider.class);
 		removeRiderResults(rider);
 		for (Entity team : teams) {
 			if (((Team) team).getChildren().remove(rider)) return;
@@ -192,10 +195,10 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 	public void registerRiderResultsInStage(int stageId, int riderId, LocalTime... checkpoints)
 			throws IDNotRecognisedException, DuplicatedResultException, InvalidCheckpointTimesException,
 			InvalidStageStateException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		validateStageState(stage);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		if (stage.isInPreparation()) throw new InvalidStageStateException();
 		if (checkpoints.length != stage.numCriticalPoints()) throw new InvalidCheckpointTimesException();
-		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
+		Rider rider = getEntity(riderId, downcast(teams, Team.class), Rider.class);
 		stage.addResult(rider, Arrays.stream(checkpoints)
 				.map(time -> {
 					LocalDate date = stage.start.toLocalDate();
@@ -209,8 +212,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public LocalTime[] getRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		Rider rider = getEntity(riderId, downcast(teams, Team.class), Rider.class);
 		Optional<LocalDateTime[]> optionalRiderCriticalTimes = Optional.ofNullable(stage.getResults().get(rider));
 		if (optionalRiderCriticalTimes.isEmpty()) return new LocalTime[0];
 		ArrayList<LocalDateTime> riderCriticalTimes = new ArrayList<>(List.of(optionalRiderCriticalTimes.get()));
@@ -228,8 +231,8 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public LocalTime getRiderAdjustedElapsedTimeInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		Rider rider = getEntity(riderId, downcast(teams, Team.class), Rider.class);
 		Map<Rider, LocalDateTime[]> results = stage.getResults();
 		Optional<LocalDateTime[]> optionalRiderResults = Optional.ofNullable(results.get(rider));
 		if (optionalRiderResults.isEmpty()) return null;
@@ -252,14 +255,14 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void deleteRiderResultsInStage(int stageId, int riderId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
-		Rider rider = getEntity(riderId, narrow(teams, Team.class), Rider.class);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
+		Rider rider = getEntity(riderId, downcast(teams, Team.class), Rider.class);
 		stage.getResults().remove(rider);
 	}
 
 	@Override
 	public int[] getRidersRankInStage(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
 		Map<Rider, LocalDateTime[]> results = stage.getResults();
 		return results.entrySet().stream()
 				.map(entry -> {
@@ -279,7 +282,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public LocalTime[] getRankedAdjustedElapsedTimesInStage(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
 		ArrayList<AbstractMap.SimpleEntry<LocalTime, LocalTime>> elapsedAdjustedElapsedTimes = new ArrayList<>();
 		for (Map.Entry<Rider, LocalDateTime[]> entry : stage.getResults().entrySet()) {
 			LocalDateTime[] times = entry.getValue();
@@ -298,13 +301,13 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getRidersPointsInStage(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
 		Map<Rider, LocalDateTime[]> results = stage.getResults();
 		if (results.isEmpty()) return new int[0];
 		int[] rankedRiderIds = getRidersRankInStage(stageId);
 		ArrayList<Rider> rankedRiders = new ArrayList<>();
 		for (int rankedRiderId : rankedRiderIds) {
-			rankedRiders.add(getEntity(rankedRiderId, narrow(teams, Team.class), Rider.class));
+			rankedRiders.add(getEntity(rankedRiderId, downcast(teams, Team.class), Rider.class));
 		}
 		ArrayList<Duration> elapsedTimes = rankedRiders.stream()
 				.map(rider -> {
@@ -364,7 +367,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public int[] getRidersMountainPointsInStage(int stageId) throws IDNotRecognisedException {
-		Stage stage = getEntity(stageId, narrow(races, Race.class), Stage.class);
+		Stage stage = getEntity(stageId, downcast(races, Race.class), Stage.class);
 		Map<Rider, LocalDateTime[]> results = stage.getResults();
 		if (results.isEmpty()) return new int[0];
 		int[] ridersMountainPoints;
@@ -374,7 +377,7 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		if (stage.isTimeTrial()) return ridersMountainPoints;
 		ArrayList<Rider> rankedRiders = new ArrayList<>();
 		for (int rankedRiderId : rankedRiderIds) {
-			rankedRiders.add(getEntity(rankedRiderId, narrow(teams, Team.class), Rider.class));
+			rankedRiders.add(getEntity(rankedRiderId, downcast(teams, Team.class), Rider.class));
 		}
 		ArrayList<Checkpoint> checkpoints = stage.getChildren();
 		ArrayList<Checkpoint> climbs = checkpoints.stream()
@@ -414,33 +417,60 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 
 	@Override
 	public void eraseCyclingPortal() {
-		// TODO Auto-generated method stub
-
+		nextId = 1;
+		teams.clear();
+		races.clear();
 	}
 
 	@Override
 	public void saveCyclingPortal(String filename) throws IOException {
-		// TODO Auto-generated method stub
-
+		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename));
+		out.writeInt(nextId);
+		out.writeObject(teams);
+		out.writeObject(races);
+		out.close();
 	}
 
 	@Override
 	public void loadCyclingPortal(String filename) throws IOException, ClassNotFoundException {
-		// TODO Auto-generated method stub
-
+		ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename));
+		nextId = in.readInt();
+		teams = (ArrayList<Entity>) in.readObject();
+		races = (ArrayList<Entity>) in.readObject();
 	}
 
-	// HELPER METHODS:
-	private <T extends Entity> ArrayList<T> narrow(ArrayList<Entity> entities, Class<T> subEntity) {
+    /**
+	 * Downcasts an ArrayList of entities.
+	 *
+	 * @param entities the entities you want to downcast.
+	 * @param subEntity the class you want to downcast each entity to.
+	 * @return the downcasted entities.
+	 * @param <T> any class that extends Entity.
+	 */
+	private <T extends Entity> ArrayList<T> downcast(ArrayList<Entity> entities, Class<T> subEntity) {
 		ArrayList<T> subEntities = new ArrayList<>();
-		for (Entity entity : entities) {
-			subEntities.add(subEntity.cast(entity));
-		}
+		for (Entity entity : entities) subEntities.add(subEntity.cast(entity));
 		return subEntities;
 	}
+
+	/**
+	 * Attempts to get an entity in an ArrayList of entities, given its id.
+	 *
+	 * @param id the id of the entity you want to get.
+	 * @param entities the entities you want to search through.
+	 * @return an optional entity.
+	 */
 	private Optional<Entity> getEntity(int id, ArrayList<Entity> entities) {
 		return entities.stream().filter(entity -> entity.id == id).findFirst();
 	}
+	/**
+	 * Attempts to get an entity in an ArrayList of entities, given its id.
+	 *
+	 * @param id the id of the entity you want to get.
+	 * @param entities the entities you want to search through.
+	 * @return an optional entity.
+	 * @throws IDNotRecognisedException if the id does not match to any entity within the given entities.
+	 */
 	private <T extends Entity> T getEntity(int id, ArrayList<? extends HasChildren> entities, Class<T> subEntityClass) throws IDNotRecognisedException {
 		for (HasChildren entity : entities) {
 			ArrayList<Entity> entityChildren = new ArrayList<>(entity.getChildren());
@@ -449,6 +479,12 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 		}
 		throw new IDNotRecognisedException();
 	}
+
+	/**
+	 * Removes a rider's results from all stages in every race.
+	 *
+	 * @param rider the rider whose results you want to remove.
+	 */
 	private void removeRiderResults(Rider rider) {
 		for (Entity race : races) {
 			ArrayList<Stage> stages = ((Race) race).getChildren();
@@ -457,6 +493,16 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 			}
 		}
 	}
+
+	/**
+	 * Ensures an entity is not illegally created.
+	 *
+	 * @param entities the entities you want to check do not already have the same name.
+	 * @param name the name of the entity you want to create.
+	 * @throws InvalidNameException if the given name is null, empty, greater than 30 characters,
+	 * 	 * or contains whitespace
+	 * @throws IllegalNameException if the name exists in a given ArrayList of entities.
+	 */
 	private void validateName(ArrayList<Entity> entities, String name) throws InvalidNameException, IllegalNameException {
 		if (name == null || name.isEmpty() || name.length() > 30) throw new InvalidNameException();
 		for (char c : name.toCharArray()) {
@@ -464,12 +510,15 @@ public class CyclingPortalImpl implements MiniCyclingPortal {
 				throw new InvalidNameException();
 			}
 		}
-		for (Entity entity : entities) if (entity.getName().equals(name)) throw new IllegalNameException();
+		for (Entity entity : entities) if (entity.name.equals(name)) throw new IllegalNameException();
 	}
-	private void validateStageState(Stage stage) throws InvalidStageStateException {
-		String currentState = stage.getState();
-		if (currentState.equals("waiting for results")) throw new InvalidStageStateException();
-	}
+
+	/**
+	 * Converts a Duration object to a LocalTime object.
+	 *
+	 * @param duration the duration you would like to convert to a LocalTime object.
+	 * @return a LocalTime object, derived from the parts of the duration.
+	 */
 	private LocalTime toLocalTime(Duration duration) {
 		int hours = duration.toHoursPart();
 		int minutes = duration.toMinutesPart();

@@ -2,6 +2,11 @@ package cycling;
 
 import java.io.Serializable;
 
+/**
+ * A {@link Race}, {@link Stage}, {@link Checkpoint}, {@link Team}, or {@link Rider}.
+ *
+ * @author Marcus Carter
+ */
 public class Entity implements Serializable {
     protected final int id;
     protected final String name;

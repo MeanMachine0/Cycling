@@ -1,5 +1,10 @@
 package cycling;
 
+/**
+ * Contained within a {@link Stage}.
+ *
+ * @author Marcus Carter
+ */
 public class Checkpoint extends Entity {
     protected final CheckpointType type;
     protected final double location;
@@ -12,6 +17,5 @@ public class Checkpoint extends Entity {
     @Override
     public String toString() { return "Checkpoint[id="+id+", type="+type+", location="+location+"]"; }
 
-    public CheckpointType getType() { return type; }
     public double getLocation() { return location; }
 }

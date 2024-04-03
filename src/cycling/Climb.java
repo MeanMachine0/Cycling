@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 
+/**
+ * A categorized climb {@link Checkpoint}.
+ *
+ * @author Marcus Carter
+ */
 public class Climb extends Checkpoint {
     protected final double averageGradient;
     protected final double length;

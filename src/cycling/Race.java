@@ -2,6 +2,11 @@ package cycling;
 
 import java.util.ArrayList;
 
+/**
+ * Contains {@link Stage}s.
+ *
+ * @author Marcus Carter
+ */
 public class Race extends Entity implements HasChildren {
     protected final String description;
     private final ArrayList<Stage> stages = new ArrayList<>();

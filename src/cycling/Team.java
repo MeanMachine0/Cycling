@@ -2,6 +2,11 @@ package cycling;
 
 import java.util.ArrayList;
 
+/**
+ * Contains {@link Rider}s
+ *
+ * @author Marcus Carter
+ */
 public class Team extends Entity implements HasChildren {
     protected final String description;
     private final ArrayList<Rider> riders = new ArrayList<>();

@@ -4,6 +4,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
+/**
+ * Contained within a {@link Race}, contains {@link Checkpoint}s.
+ *
+ * @author Marcus Carter
+ */
 public class Stage extends Entity implements HasChildren {
     protected final String description;
     protected final double length;
@@ -48,13 +53,34 @@ public class Stage extends Entity implements HasChildren {
         if (results.containsKey(rider)) throw new DuplicatedResultException();
         results.put(rider, criticalTimes);
     }
+
+    /**
+     * Adds a checkpoint to the checkpoints in the stage, then sorts them by their locations, ascending.
+     *
+     * @param checkpoint the checkpoint to be added to the stage.
+     */
     public void addCheckpoint(Checkpoint checkpoint) {
         checkpoints.add(checkpoint);
         checkpoints.sort(Comparator.comparingDouble(Checkpoint::getLocation));
     }
+
+    /**
+     * Calculates the elapsed time of a rider in a stage which is not a time trial.
+     *
+     * @param riderEnd the time the rider finished the stage.
+     * @return the rider's elapsed time in this stage.
+     */
     public Duration timeElapsed(LocalDateTime riderEnd) {
         return Duration.between(start, riderEnd);
     }
+
+    /**
+     * Calculates the elapsed time of a rider in a time trial stage.
+     *
+     * @param riderStart the time the rider began the stage.
+     * @param riderEnd the time the rider finished the stage.
+     * @return the rider's elapsed time in this stage.
+     */
     public Duration ttTimeElapsed(LocalDateTime riderStart, LocalDateTime riderEnd) {
         return Duration.between(riderStart, riderEnd);
     }

@@ -643,9 +643,9 @@ class CyclingPortalImplTest {
         int raceId = portal.createRace("Egg&Spoon", "...on a bike");
         int stageId = portal.addStageToRace(raceId, "Egg",
                 "Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
-        portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C4, 0.8, 5.0);
-        portal.addCategorizedClimbToStage(stageId, 4.0, CheckpointType.C2, 0.2, 1.0);
-        portal.addCategorizedClimbToStage(stageId, 1.25, CheckpointType.HC, 1.2, 6.0);
+        portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
+        portal.addIntermediateSprintToStage(stageId, 4);
+        portal.addIntermediateSprintToStage(stageId, 1.25);
         int teamId = portal.createTeam("Apes", "Zoo escapees");
         int parentsId = portal.createTeam("Great_Apes", "The founding zoo escapees");
         int petsId = portal.createTeam("Humans", "Zookeepers");
@@ -680,6 +680,24 @@ class CyclingPortalImplTest {
         portal.eraseCyclingPortal();
         portal.loadCyclingPortal(filename);
         // assert
+        bouncer.setTwo(8+8+15);
+        fluffy.setTwo(9+9+15);
+        stormy.setTwo(10+10+30);
+        dad.setTwo(11+11+25);
+        mum.setTwo(13+13+22);
+        dan.setTwo(15+15+19);
+        joel.setTwo(17+20+17);
+        me.setTwo(20+20+11);
+        ArrayList<Pair<Integer, Integer>> riders = new ArrayList<>(List.of(bouncer, fluffy, stormy, dan, joel, me, dad, mum));
+        int[] rankedRiderIds = portal.getRidersRankInStage(stageId);
+        int[] expectedRankedPoints = Arrays.stream(rankedRiderIds)
+                .map(riderId -> riders.stream().filter(pair -> riderId == pair.getOne()).findFirst().orElseThrow().getTwo()).toArray();
+        int[] rankedPoints = portal.getRidersPointsInStage(stageId);
+        assertArrayEquals(expectedRankedPoints, rankedPoints);
+    }
+    @org.junit.jupiter.api.Test
+    void loadCyclingPortal_throws() {
+        assertThrows(IOException.class, () -> portal.loadCyclingPortal(filename));
     }
     private static LocalTime[] toLocalTimeArray(LocalDateTime[] times) {
         return Arrays.stream(times)

@@ -33,12 +33,14 @@ public class CyclingPortalTestApp {
 			portal.loadCyclingPortal(filename);
 			System.out.println("Loaded portal.");
 			System.out.println(Arrays.toString(portal.getRidersPointsInStage(2)));
+			System.out.println(portal.getNumberOfStages(1));
 		}
 		else {
 			LocalDateTime start = LocalDateTime.now().plusDays(1);
 			int raceId = portal.createRace("Egg&Spoon", "...on a bike");
 			int stageId = portal.addStageToRace(raceId, "Egg",
 					"Carry an egg", 3.141 + 3, start, StageType.MEDIUM_MOUNTAIN);
+			System.out.println(portal.viewRaceDetails(raceId));
 			portal.addCategorizedClimbToStage(stageId, 3.0, CheckpointType.C2, 0.8, 5.0);
 			portal.addIntermediateSprintToStage(stageId, 4);
 			portal.addIntermediateSprintToStage(stageId, 1.25);
@@ -61,6 +63,7 @@ public class CyclingPortalTestApp {
 			LocalTime[] danCriticalTimes = toLocalTimeArray(new LocalDateTime[]{start, start.plusMinutes(232), start.plusMinutes(400), start.plusMinutes(552), start.plusMinutes(600).minusSeconds(1)});
 			LocalTime[] joelCriticalTimes = toLocalTimeArray(new LocalDateTime[]{start, start.plusMinutes(231), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600)});
 			LocalTime[] myCriticalTimes = toLocalTimeArray(new LocalDateTime[]{start, start.plusMinutes(229), start.plusMinutes(400), start.plusMinutes(551), start.plusMinutes(600).plusSeconds(3)});
+			portal.concludeStagePreparation(stageId);
 			portal.registerRiderResultsInStage(stageId, bouncer.getOne(), bouncerCriticalTimes);
 			portal.registerRiderResultsInStage(stageId, fluffy.getOne(), fluffyCriticalTimes);
 			portal.registerRiderResultsInStage(stageId, dan.getOne(), danCriticalTimes);
@@ -86,6 +89,10 @@ public class CyclingPortalTestApp {
 					.map(riderId -> riders.stream().filter(pair -> riderId == pair.getOne()).findFirst().orElseThrow().getTwo()).toArray();
 			if (Arrays.equals(expectedRankedPoints, rankedPoints)) System.out.println(Arrays.toString(rankedPoints));
 			portal.saveCyclingPortal(filename);
+			portal.eraseCyclingPortal();
+			portal.loadCyclingPortal(filename);
+			rankedPoints = portal.getRidersPointsInStage(stageId);
+			if (Arrays.equals(expectedRankedPoints, rankedPoints)) System.out.println(Arrays.toString(rankedPoints));
 		}
 	}
 	private static LocalTime[] toLocalTimeArray(LocalDateTime[] times) {

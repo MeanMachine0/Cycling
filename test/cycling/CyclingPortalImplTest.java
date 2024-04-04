@@ -696,6 +696,13 @@ class CyclingPortalImplTest {
         assertArrayEquals(expectedRankedPoints, rankedPoints);
     }
     @org.junit.jupiter.api.Test
+    void saveLoadEmptyCyclingPortal() throws IOException, ClassNotFoundException {
+        portal.saveCyclingPortal(filename);
+        portal.loadCyclingPortal(filename);
+        assertArrayEquals(new int[0], portal.getRaceIds());
+        assertArrayEquals(new int[0], portal.getTeams());
+    }
+    @org.junit.jupiter.api.Test
     void loadCyclingPortal_throws() {
         assertThrows(IOException.class, () -> portal.loadCyclingPortal(filename));
     }

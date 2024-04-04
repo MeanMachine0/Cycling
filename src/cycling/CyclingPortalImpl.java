@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
+ * My implementation of {@link MiniCyclingPortal}.
+ *
  * @author Marcus Carter
  */
 public class CyclingPortalImpl implements MiniCyclingPortal {

@@ -8,23 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * A short program to illustrate an app testing some minimal functionality of a
- * concrete implementation of the CyclingPortal interface -- note you
- * will want to increase these checks, and run it on your CyclingPortalImpl class
- * (not the BadCyclingPortal class).
- *
- * 
- * @author Diogo Pacheco
- * @version 2.0
- */
 public class CyclingPortalTestApp {
 	static final String filename = "miniCyclingPortal.ser";
-	/**
-	 * Test method.
-	 *
-	 * @param args not used
-	 */
 	public static void main(String[] args) throws InvalidNameException, IllegalNameException, IDNotRecognisedException, InvalidLengthException, InvalidStageStateException, InvalidLocationException, InvalidStageTypeException, DuplicatedResultException, InvalidCheckpointTimesException, IOException, ClassNotFoundException {
 		MiniCyclingPortal portal = new CyclingPortalImpl();
 		File file = new File(filename);

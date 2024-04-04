@@ -3,7 +3,7 @@ package cycling;
 import java.util.ArrayList;
 
 /**
- * Contains {@link Rider}s
+ * Contains {@link Rider}s.
  *
  * @author Marcus Carter
  */
